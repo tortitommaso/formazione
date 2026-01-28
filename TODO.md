@@ -78,20 +78,28 @@
     - [x] Tabella comparativa strategie
   - [x] Quiz interattivo (5 domande, q21-q25)
 
-- [ ] **Modulo 6: Advanced Topics 2026**
-  - [ ] Observability:
-    - [ ] Logging (structured logging, ELK stack)
-    - [ ] Metrics (Prometheus, Grafana)
-    - [ ] Tracing (OpenTelemetry, Jaeger)
-  - [ ] Infrastructure as Code:
-    - [ ] Terraform basics
-    - [ ] State management
-    - [ ] Modules
-  - [ ] LLM/AI Integration:
-    - [ ] RAG (Retrieval Augmented Generation)
-    - [ ] Vector Databases (Pinecone, Weaviate, pgvector)
-    - [ ] Embeddings
-  - [ ] Quiz interattivo
+- [x] **Modulo 6: Advanced Topics 2026**
+  - [x] Observability:
+    - [x] I tre pilastri (Logs, Metrics, Traces)
+    - [x] Logging (structured logging, MDC, ELK stack, Loki)
+    - [x] Metrics (Prometheus, Micrometer, PromQL, Four Golden Signals)
+    - [x] Tracing (OpenTelemetry, Jaeger, Context Propagation, Sampling)
+    - [x] Correlazione tra i tre pilastri
+  - [x] Infrastructure as Code:
+    - [x] Terraform basics (HCL, providers, resources, data sources)
+    - [x] Terraform workflow (init, plan, apply, destroy)
+    - [x] State management (remote state, locking, security)
+    - [x] Modules (riusabilità, Terraform Registry)
+    - [x] Best practices
+  - [x] LLM/AI Integration:
+    - [x] RAG (Retrieval Augmented Generation) architecture
+    - [x] Embeddings e similarity search
+    - [x] Vector Databases (Pinecone, Weaviate, pgvector, Milvus, Qdrant)
+    - [x] Spring AI implementation
+    - [x] Advanced patterns (Hybrid Search, Query Transformation, Chunking)
+    - [x] Considerazioni architetturali (latency, cost, security)
+  - [x] Quiz interattivo (5 domande, q26-q30)
+  - [x] Domande da colloquio (7 domande con risposte)
 
 - [ ] **Modulo 7: Coding Challenges**
   - [ ] LRU Cache (LinkedHashMap o custom implementation)
@@ -130,6 +138,6 @@
 ## Convenzioni Codice
 
 - ID sezioni: `modulo{N}-{topic}` (es: `modulo3-cap-theorem`)
-- ID quiz: `q{N}` progressivo globale (ultimo usato: q25)
+- ID quiz: `q{N}` progressivo globale (ultimo usato: q30)
 - Diagrammi: ASCII art dentro `<div class="diagram"><pre>...</pre></div>`
 - Info box: `<div class="info-box">`, `.info-box.warning`, `.info-box.success`

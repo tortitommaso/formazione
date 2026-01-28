@@ -24,11 +24,23 @@ Modulo 8: tipi di programmazione diversa da quella a oggetti. ad esempio princip
 
 
 
-Interattività e Quiz:Ogni sezione deve terminare con un "Interactive Challenge Quiz".Le domande devono essere di livello "Hard" (logiche, non mnemoniche).
+Interattività e Quiz:Ogni sezione deve terminare con due paragrafi "Interactive Challenge Quiz" e "Questions".
 
-Implementa una logica JavaScript per cui, se l'utente sbaglia, viene mostrato un feedback immediato che spiega l'errore tecnico commesso e perché la risposta corretta è la migliore.Requisiti Tecnici:Usa un layout responsive moderno.Includi una libreria CDN per il Syntax Highlighting del codice (es. Prism.js o Highlight.js).
+Nella sezione quiz, le domande devono essere di livello "Hard" (logiche, non mnemoniche).
+
+Implementa una logica JavaScript per cui, se l'utente sbaglia, viene mostrato un feedback immediato che spiega l'errore tecnico commesso e perché la risposta corretta è la migliore. 
+
+Nella sezione Question indica un insieme di domande che possono essere eseguite in un tipico colloquio tecnico di assunzione. fornisci anche un esempio di risposta giusta. in questa sezione non c'é bisogno di interattività.
 
 
 
-Inizia con il modulo 1 poi fermati cosi ti do dei feedback incrementali. lavora in modo incrementale e interativo in modo da non consumare tutti i token subito prima del mio feedback. quando reputi che c'é un primo risultato, fermati e chiedimi feedback.
+
+
+Requisiti Tecnici:Usa un layout responsive moderno.Includi una libreria CDN per il Syntax Highlighting del codice (es. Prism.js o Highlight.js).
+
+
+
+Inizia con il modulo 1 poi fermati cosi ti do dei feedback incrementali. lavora in modo incrementale e interativo in modo da non consumare tutti i token subito prima del mio feedback.
+
+Tieni aggiornato il file TODO.md al fine di valutare cosa manca. Aggiorna il file TODO ogni volta leggendo questo readme, che puo cambiare, e valutando se mancano dei pezzi. 
 

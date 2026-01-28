@@ -522,6 +522,11 @@
                 <a href="#modulo5-quiz" class="nav-link nav-sublink">Quiz</a>
 
                 <a href="#modulo6" class="nav-link"><span>6. Advanced Topics 2026</span></a>
+                <a href="#modulo6-observability" class="nav-link nav-sublink">Observability</a>
+                <a href="#modulo6-terraform" class="nav-link nav-sublink">Infrastructure as Code</a>
+                <a href="#modulo6-ai" class="nav-link nav-sublink">LLM & AI Integration</a>
+                <a href="#modulo6-quiz" class="nav-link nav-sublink">Quiz</a>
+
                 <a href="#modulo7" class="nav-link"><span>7. Coding Challenges</span></a>
             </div>
         </nav>
@@ -5889,6 +5894,1472 @@ spec:
                 </div>
             </section>
 
+            <!-- ==================== MODULO 6: ADVANCED TOPICS 2026 ==================== -->
+
+            <header class="module-header" id="modulo6">
+                <span class="module-tag">Modulo 6</span>
+                <h1>Advanced Topics 2026</h1>
+                <p>Observability, Infrastructure as Code e integrazione AI/LLM nelle applicazioni moderne</p>
+            </header>
+
+            <!-- Observability Section -->
+            <section class="section" id="modulo6-observability">
+                <h2>Observability: I Tre Pilastri</h2>
+
+                <p>L'<strong>Observability</strong> è la capacità di comprendere lo stato interno di un sistema attraverso i suoi output esterni. A differenza del semplice monitoring (che risponde a "il sistema funziona?"), l'observability risponde a "perché il sistema si comporta così?".</p>
+
+                <div class="info-box">
+                    <h4>Monitoring vs Observability</h4>
+                    <p>Il <strong>monitoring</strong> è reattivo: definisci metriche e alert in anticipo per problemi noti. L'<strong>observability</strong> è esplorativa: ti permette di investigare problemi sconosciuti attraverso dati correlati. In sistemi distribuiti complessi, non puoi prevedere tutti i possibili failure mode, quindi hai bisogno di observability.</p>
+                </div>
+
+                <h3>I Tre Pilastri dell'Observability</h3>
+
+                <div class="diagram">
+                    <pre>
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        OBSERVABILITY STACK                                   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│   ┌─────────────┐      ┌─────────────┐      ┌─────────────┐                │
+│   │   LOGS      │      │   METRICS   │      │   TRACES    │                │
+│   │             │      │             │      │             │                │
+│   │  What       │      │  How much   │      │  Where      │                │
+│   │  happened?  │      │  & how fast?│      │  & how long?│                │
+│   └──────┬──────┘      └──────┬──────┘      └──────┬──────┘                │
+│          │                    │                    │                        │
+│          ▼                    ▼                    ▼                        │
+│   ┌─────────────┐      ┌─────────────┐      ┌─────────────┐                │
+│   │ Elasticsearch│      │ Prometheus  │      │   Jaeger    │                │
+│   │ Loki        │      │ InfluxDB    │      │   Zipkin    │                │
+│   │ Splunk      │      │ Datadog     │      │   Tempo     │                │
+│   └─────────────┘      └─────────────┘      └─────────────┘                │
+│                                                                              │
+│                    ┌───────────────────────┐                                │
+│                    │    OpenTelemetry      │                                │
+│                    │  (Unified Collection) │                                │
+│                    └───────────────────────┘                                │
+└─────────────────────────────────────────────────────────────────────────────┘
+                    </pre>
+                </div>
+
+                <h3>1. Logging: Il "Cosa è Successo"</h3>
+
+                <p>I <strong>log</strong> sono record immutabili di eventi discreti che si verificano nel sistema. Ogni log entry cattura un momento specifico nel tempo con contesto dettagliato.</p>
+
+                <h4>Structured Logging vs Unstructured Logging</h4>
+
+                <p>Il <strong>structured logging</strong> produce log in formato machine-readable (JSON), rendendo possibile l'analisi automatizzata e le query complesse. È essenziale per sistemi distribuiti dove devi correlare eventi tra servizi diversi.</p>
+
+                <pre><code class="language-java">// ❌ Unstructured Logging - difficile da parsare e analizzare
+log.info("User " + userId + " placed order " + orderId + " for $" + amount);
+
+// ✅ Structured Logging con SLF4J + Logback/Log4j2
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+
+@Service
+public class OrderService {
+    private static final Logger log = LoggerFactory.getLogger(OrderService.class);
+
+    public Order createOrder(String userId, OrderRequest request) {
+        // MDC (Mapped Diagnostic Context) per contesto cross-cutting
+        MDC.put("correlationId", UUID.randomUUID().toString());
+        MDC.put("userId", userId);
+
+        try {
+            Order order = processOrder(request);
+
+            // Structured logging con key-value pairs
+            log.info("Order created successfully",
+                kv("orderId", order.getId()),
+                kv("amount", order.getTotalAmount()),
+                kv("itemCount", order.getItems().size()),
+                kv("paymentMethod", order.getPaymentMethod())
+            );
+
+            return order;
+        } catch (InsufficientStockException e) {
+            log.warn("Order creation failed due to stock",
+                kv("orderId", request.getOrderId()),
+                kv("failedItems", e.getFailedItems()),
+                kv("reason", "insufficient_stock")
+            );
+            throw e;
+        } finally {
+            MDC.clear();
+        }
+    }
+}</code></pre>
+
+                <p>Il JSON risultante è facilmente indicizzabile e queryable:</p>
+
+                <pre><code class="language-json">{
+  "timestamp": "2026-01-28T10:15:30.123Z",
+  "level": "INFO",
+  "logger": "com.example.OrderService",
+  "message": "Order created successfully",
+  "correlationId": "abc-123-def-456",
+  "userId": "user_789",
+  "orderId": "ord_12345",
+  "amount": 149.99,
+  "itemCount": 3,
+  "paymentMethod": "CREDIT_CARD",
+  "service": "order-service",
+  "environment": "production",
+  "kubernetes": {
+    "pod": "order-service-7d4b5c6-x2k9f",
+    "namespace": "ecommerce"
+  }
+}</code></pre>
+
+                <h4>Log Levels e Best Practices</h4>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Level</th>
+                            <th>Quando Usare</th>
+                            <th>Esempio</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>ERROR</code></td>
+                            <td>Errori che richiedono intervento immediato</td>
+                            <td>Database connection failed, Payment gateway timeout</td>
+                        </tr>
+                        <tr>
+                            <td><code>WARN</code></td>
+                            <td>Situazioni anomale ma gestite, degradazione</td>
+                            <td>Retry succeeded, Cache miss rate high, Fallback activated</td>
+                        </tr>
+                        <tr>
+                            <td><code>INFO</code></td>
+                            <td>Eventi di business significativi</td>
+                            <td>Order created, User registered, Payment processed</td>
+                        </tr>
+                        <tr>
+                            <td><code>DEBUG</code></td>
+                            <td>Dettagli utili per troubleshooting</td>
+                            <td>Request/response payload, Cache hit, Query executed</td>
+                        </tr>
+                        <tr>
+                            <td><code>TRACE</code></td>
+                            <td>Dettagli molto granulari (raramente in prod)</td>
+                            <td>Method entry/exit, Loop iterations</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h4>ELK Stack (Elasticsearch, Logstash, Kibana)</h4>
+
+                <p>L'<strong>ELK Stack</strong> è la soluzione più diffusa per log aggregation e analysis:</p>
+
+                <div class="diagram">
+                    <pre>
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│   Services   │────▶│   Filebeat   │────▶│   Logstash   │────▶│Elasticsearch │
+│   (Logs)     │     │   (Shipper)  │     │  (Transform) │     │   (Store)    │
+└──────────────┘     └──────────────┘     └──────────────┘     └──────┬───────┘
+                                                                       │
+                                                                       ▼
+                                                                ┌──────────────┐
+                                                                │    Kibana    │
+                                                                │ (Visualize)  │
+                                                                └──────────────┘
+                    </pre>
+                </div>
+
+                <ul>
+                    <li><strong>Filebeat</strong>: Agent leggero che legge i log file e li invia a Logstash/Elasticsearch</li>
+                    <li><strong>Logstash</strong>: Pipeline di processing per parsing, enrichment e transformation dei log</li>
+                    <li><strong>Elasticsearch</strong>: Database distribuito ottimizzato per full-text search e analytics</li>
+                    <li><strong>Kibana</strong>: UI per visualizzazione, dashboards e query dei log</li>
+                </ul>
+
+                <div class="info-box">
+                    <h4>Alternativa: Grafana Loki</h4>
+                    <p><strong>Loki</strong> è un'alternativa più leggera a Elasticsearch, sviluppata da Grafana Labs. A differenza di ELK che indicizza il contenuto completo dei log, Loki indicizza solo i metadati (labels) e comprime il testo dei log. Questo lo rende molto più economico in termini di storage e risorse, ideale per ambienti Kubernetes dove i log sono già etichettati con pod, namespace, etc.</p>
+                </div>
+
+                <h3>2. Metrics: Il "Quanto e Quanto Veloce"</h3>
+
+                <p>Le <strong>metrics</strong> sono misurazioni numeriche aggregate nel tempo. A differenza dei log (eventi discreti), le metriche rappresentano valori che cambiano continuamente: CPU usage, request count, response time, error rate.</p>
+
+                <h4>Tipi di Metriche</h4>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tipo</th>
+                            <th>Descrizione</th>
+                            <th>Esempio</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>Counter</code></td>
+                            <td>Valore che può solo aumentare (o reset a 0)</td>
+                            <td>http_requests_total, errors_total</td>
+                        </tr>
+                        <tr>
+                            <td><code>Gauge</code></td>
+                            <td>Valore che può aumentare o diminuire</td>
+                            <td>temperature, active_connections, queue_size</td>
+                        </tr>
+                        <tr>
+                            <td><code>Histogram</code></td>
+                            <td>Distribuzione di valori in bucket predefiniti</td>
+                            <td>http_request_duration_seconds</td>
+                        </tr>
+                        <tr>
+                            <td><code>Summary</code></td>
+                            <td>Simile a Histogram ma calcola quantili client-side</td>
+                            <td>request_latency (p50, p90, p99)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h4>Prometheus e Spring Boot Actuator</h4>
+
+                <pre><code class="language-java">// pom.xml dependencies
+// spring-boot-starter-actuator
+// micrometer-registry-prometheus
+
+// application.yml
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, metrics, prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: 0.5, 0.9, 0.95, 0.99</code></pre>
+
+                <pre><code class="language-java">@Service
+public class PaymentService {
+
+    private final MeterRegistry meterRegistry;
+    private final Counter paymentCounter;
+    private final Timer paymentTimer;
+
+    public PaymentService(MeterRegistry meterRegistry) {
+        this.meterRegistry = meterRegistry;
+
+        // Counter per contare i pagamenti per stato
+        this.paymentCounter = Counter.builder("payments_total")
+            .description("Total number of payment attempts")
+            .tag("service", "payment-service")
+            .register(meterRegistry);
+
+        // Timer per misurare la latenza
+        this.paymentTimer = Timer.builder("payment_processing_duration")
+            .description("Time spent processing payments")
+            .publishPercentiles(0.5, 0.95, 0.99)
+            .register(meterRegistry);
+    }
+
+    public PaymentResult processPayment(PaymentRequest request) {
+        return paymentTimer.record(() -> {
+            try {
+                PaymentResult result = gateway.charge(request);
+
+                // Incrementa counter con tag dinamico
+                meterRegistry.counter("payments_total",
+                    "status", result.getStatus().name(),
+                    "payment_method", request.getMethod().name()
+                ).increment();
+
+                return result;
+            } catch (PaymentException e) {
+                meterRegistry.counter("payments_total",
+                    "status", "FAILED",
+                    "error_type", e.getClass().getSimpleName()
+                ).increment();
+                throw e;
+            }
+        });
+    }
+
+    // Gauge per valori che cambiano
+    @PostConstruct
+    public void registerGauges() {
+        Gauge.builder("payment_queue_size", paymentQueue, Queue::size)
+            .description("Current size of payment processing queue")
+            .register(meterRegistry);
+    }
+}</code></pre>
+
+                <h4>PromQL: Querying Metrics</h4>
+
+                <p><strong>PromQL</strong> è il linguaggio di query di Prometheus. Ecco alcune query comuni:</p>
+
+                <pre><code class="language-yaml"># Request rate (richieste al secondo negli ultimi 5 minuti)
+rate(http_requests_total[5m])
+
+# Error rate percentuale
+sum(rate(http_requests_total{status=~"5.."}[5m]))
+/ sum(rate(http_requests_total[5m])) * 100
+
+# 99th percentile latency
+histogram_quantile(0.99,
+  sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service)
+)
+
+# Apdex score (Application Performance Index)
+# Soddisfatti: < 300ms, Tolleranti: < 1.2s, Frustrati: > 1.2s
+(
+  sum(rate(http_request_duration_seconds_bucket{le="0.3"}[5m]))
+  + sum(rate(http_request_duration_seconds_bucket{le="1.2"}[5m]))
+) / 2 / sum(rate(http_request_duration_seconds_count[5m]))</code></pre>
+
+                <h4>The Four Golden Signals (Google SRE)</h4>
+
+                <p>Google SRE definisce quattro metriche fondamentali per monitorare qualsiasi servizio:</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Signal</th>
+                            <th>Descrizione</th>
+                            <th>Metrica Prometheus</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Latency</strong></td>
+                            <td>Tempo per servire una richiesta</td>
+                            <td><code>histogram_quantile(0.99, http_request_duration_seconds_bucket)</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Traffic</strong></td>
+                            <td>Quante richieste stai ricevendo</td>
+                            <td><code>rate(http_requests_total[5m])</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Errors</strong></td>
+                            <td>Tasso di richieste fallite</td>
+                            <td><code>rate(http_requests_total{status=~"5.."}[5m])</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Saturation</strong></td>
+                            <td>Quanto è "pieno" il sistema</td>
+                            <td><code>container_memory_usage_bytes / container_spec_memory_limit_bytes</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>3. Distributed Tracing: Il "Dove e Quanto Tempo"</h3>
+
+                <p>In un sistema distribuito, una singola richiesta utente può attraversare decine di servizi. Il <strong>distributed tracing</strong> traccia il percorso completo di una richiesta attraverso tutti i servizi, permettendo di identificare colli di bottiglia e failure points.</p>
+
+                <div class="diagram">
+                    <pre>
+Richiesta Utente: GET /api/orders/123
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Trace ID: abc-123-xyz
+├── Span: API Gateway (12ms)
+│   ├── Span: Auth Service - validate token (8ms)
+│   │   └── Span: Redis - get session (2ms)
+│   │
+│   └── Span: Order Service - get order (45ms)
+│       ├── Span: PostgreSQL - SELECT order (15ms)
+│       │
+│       ├── Span: User Service - get user details (18ms)  ← Chiamata HTTP
+│       │   └── Span: PostgreSQL - SELECT user (5ms)
+│       │
+│       └── Span: Inventory Service - get stock (25ms)    ← Chiamata HTTP
+│           └── Span: Redis - get stock cache (3ms)
+
+Tempo Totale: 57ms (alcuni span sono paralleli)
+                    </pre>
+                </div>
+
+                <h4>Concetti Fondamentali</h4>
+
+                <ul>
+                    <li><strong>Trace</strong>: Rappresenta il viaggio completo di una richiesta attraverso il sistema. Ha un ID unico.</li>
+                    <li><strong>Span</strong>: Un singolo "pezzo" del trace, rappresenta un'operazione (chiamata HTTP, query DB, etc.). Ha ID, parent span ID, timing, tags.</li>
+                    <li><strong>Context Propagation</strong>: Meccanismo per passare trace ID e span ID tra servizi (via HTTP headers o message metadata).</li>
+                </ul>
+
+                <h4>OpenTelemetry: Lo Standard Unificato</h4>
+
+                <p><strong>OpenTelemetry</strong> (OTel) è lo standard CNCF che unifica la collezione di traces, metrics e logs. È il successore di OpenTracing e OpenCensus.</p>
+
+                <pre><code class="language-java">// pom.xml - Spring Boot 3 con OpenTelemetry
+// opentelemetry-spring-boot-starter
+// opentelemetry-exporter-otlp
+
+// application.yml
+spring:
+  application:
+    name: order-service
+
+otel:
+  exporter:
+    otlp:
+      endpoint: http://otel-collector:4317
+  resource:
+    attributes:
+      service.name: ${spring.application.name}
+      deployment.environment: production
+  instrumentation:
+    spring-web:
+      enabled: true
+    jdbc:
+      enabled: true</code></pre>
+
+                <pre><code class="language-java">import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
+import io.opentelemetry.instrumentation.annotations.SpanAttribute;
+
+@Service
+public class OrderService {
+
+    private final Tracer tracer;
+
+    public OrderService(Tracer tracer) {
+        this.tracer = tracer;
+    }
+
+    // Auto-instrumentation con annotation
+    @WithSpan("process-order")
+    public Order processOrder(
+            @SpanAttribute("order.id") String orderId,
+            @SpanAttribute("user.id") String userId) {
+
+        // Span automaticamente creato dalla annotation
+        Span currentSpan = Span.current();
+
+        // Aggiungere attributi dinamici
+        currentSpan.setAttribute("order.total", calculateTotal());
+
+        // Creare span figlio manualmente per operazioni custom
+        Span inventorySpan = tracer.spanBuilder("check-inventory")
+            .startSpan();
+
+        try (var scope = inventorySpan.makeCurrent()) {
+            inventorySpan.setAttribute("items.count", items.size());
+            boolean available = checkInventory(items);
+            inventorySpan.setAttribute("inventory.available", available);
+
+            if (!available) {
+                inventorySpan.setStatus(StatusCode.ERROR, "Insufficient stock");
+                throw new InsufficientStockException();
+            }
+        } finally {
+            inventorySpan.end();
+        }
+
+        return createOrder(orderId, userId);
+    }
+
+    // Propagazione automatica via RestTemplate/WebClient instrumentati
+    public UserDetails fetchUserDetails(String userId) {
+        // Il trace context viene propagato automaticamente via headers:
+        // traceparent: 00-{trace-id}-{span-id}-01
+        return restTemplate.getForObject(
+            "http://user-service/users/{id}",
+            UserDetails.class,
+            userId
+        );
+    }
+}</code></pre>
+
+                <h4>Architettura OpenTelemetry</h4>
+
+                <div class="diagram">
+                    <pre>
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         APPLICATION SERVICES                             │
+├─────────────┬─────────────┬─────────────┬─────────────┬─────────────────┤
+│ Order Svc   │ User Svc    │ Payment Svc │ Inventory   │ Notification    │
+│   (OTel     │   (OTel     │   (OTel     │   (OTel     │   (OTel         │
+│    SDK)     │    SDK)     │    SDK)     │    SDK)     │    SDK)         │
+└──────┬──────┴──────┬──────┴──────┬──────┴──────┬──────┴────────┬────────┘
+       │             │             │             │               │
+       └─────────────┴──────┬──────┴─────────────┴───────────────┘
+                            │
+                            ▼
+                 ┌─────────────────────┐
+                 │  OpenTelemetry      │
+                 │  Collector          │
+                 │  ┌───────────────┐  │
+                 │  │ Receivers     │  │  ← OTLP, Jaeger, Zipkin
+                 │  │ Processors    │  │  ← Batch, Filter, Sampling
+                 │  │ Exporters     │  │  ← Multi-backend
+                 │  └───────────────┘  │
+                 └──────────┬──────────┘
+                            │
+         ┌──────────────────┼──────────────────┐
+         │                  │                  │
+         ▼                  ▼                  ▼
+  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+  │   Jaeger    │    │   Grafana   │    │  Datadog/   │
+  │   (Traces)  │    │   Tempo     │    │  New Relic  │
+  └─────────────┘    └─────────────┘    └─────────────┘
+                    </pre>
+                </div>
+
+                <div class="info-box success">
+                    <h4>Sampling Strategies</h4>
+                    <p>In produzione con alto traffico, tracciare il 100% delle richieste è costoso. Le strategie di sampling includono:</p>
+                    <ul>
+                        <li><strong>Head-based sampling</strong>: Decidi all'inizio del trace se campionare (es. 10% delle richieste)</li>
+                        <li><strong>Tail-based sampling</strong>: Decidi alla fine del trace, utile per catturare sempre errori o latenze alte</li>
+                        <li><strong>Adaptive sampling</strong>: Campiona di più quando c'è meno traffico, di meno durante i picchi</li>
+                    </ul>
+                </div>
+
+                <h3>Correlazione tra i Tre Pilastri</h3>
+
+                <p>Il vero potere dell'observability emerge quando correli logs, metrics e traces. Il <strong>trace ID</strong> è la chiave che permette di collegare tutto:</p>
+
+                <pre><code class="language-java">// Il trace ID appare ovunque:
+
+// 1. Nei LOG (via MDC/SLF4J integration)
+{
+  "message": "Payment failed",
+  "traceId": "abc123",
+  "spanId": "def456",
+  "userId": "user_789"
+}
+
+// 2. Nelle METRICS (come exemplar)
+http_request_duration_seconds{status="500"} 2.5 # {traceId="abc123"}
+
+// 3. Nei TRACES (ovviamente)
+Trace abc123 → Span def456 → "Payment Service - charge"</code></pre>
+
+                <p>Con questa correlazione, il workflow di debugging diventa:</p>
+                <ol>
+                    <li><strong>Alert</strong>: Prometheus rileva un picco di errori 5xx</li>
+                    <li><strong>Metrics</strong>: Dashboard Grafana mostra latenza alta sul payment-service</li>
+                    <li><strong>Traces</strong>: Drill-down su un trace lento, vedi che il problema è nella chiamata al payment gateway</li>
+                    <li><strong>Logs</strong>: Filtri per trace ID, trovi il log esatto dell'errore con lo stack trace</li>
+                </ol>
+            </section>
+
+            <!-- Infrastructure as Code Section -->
+            <section class="section" id="modulo6-terraform">
+                <h2>Infrastructure as Code con Terraform</h2>
+
+                <p>L'<strong>Infrastructure as Code</strong> (IaC) è la pratica di gestire e provisioning l'infrastruttura attraverso file di configurazione versionabili, invece di processi manuali. Terraform è lo strumento IaC più diffuso, con supporto multi-cloud.</p>
+
+                <h3>Perché Infrastructure as Code?</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Approccio Manuale</th>
+                            <th>Infrastructure as Code</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Click nella console AWS/GCP/Azure</td>
+                            <td>File di configurazione versionati in Git</td>
+                        </tr>
+                        <tr>
+                            <td>"Funziona sul mio account"</td>
+                            <td>Ambienti riproducibili (dev = staging = prod)</td>
+                        </tr>
+                        <tr>
+                            <td>Chi ha modificato cosa?</td>
+                            <td>Git history + terraform plan per review</td>
+                        </tr>
+                        <tr>
+                            <td>Disaster recovery: "ricostruisco tutto a mano"</td>
+                            <td>terraform apply e l'infrastruttura rinasce</td>
+                        </tr>
+                        <tr>
+                            <td>Documentazione obsoleta</td>
+                            <td>Il codice È la documentazione</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Terraform: Concetti Fondamentali</h3>
+
+                <h4>HCL (HashiCorp Configuration Language)</h4>
+
+                <p>Terraform usa <strong>HCL</strong>, un linguaggio dichiarativo dove descrivi lo stato desiderato dell'infrastruttura, non i passi per arrivarci.</p>
+
+                <pre><code class="language-yaml"># main.tf - Esempio base: VPC + EC2 su AWS
+
+terraform {
+  required_version = ">= 1.5.0"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+
+  # Backend remoto per lo state (collaborazione team)
+  backend "s3" {
+    bucket         = "my-terraform-state"
+    key            = "prod/terraform.tfstate"
+    region         = "eu-west-1"
+    encrypt        = true
+    dynamodb_table = "terraform-locks"  # State locking
+  }
+}
+
+provider "aws" {
+  region = var.aws_region
+
+  default_tags {
+    tags = {
+      Environment = var.environment
+      ManagedBy   = "terraform"
+      Project     = var.project_name
+    }
+  }
+}
+
+# Variables
+variable "aws_region" {
+  description = "AWS region for resources"
+  type        = string
+  default     = "eu-west-1"
+}
+
+variable "environment" {
+  description = "Environment name (dev, staging, prod)"
+  type        = string
+}
+
+variable "instance_type" {
+  description = "EC2 instance type"
+  type        = string
+  default     = "t3.micro"
+
+  validation {
+    condition     = contains(["t3.micro", "t3.small", "t3.medium"], var.instance_type)
+    error_message = "Instance type must be t3.micro, t3.small, or t3.medium."
+  }
+}</code></pre>
+
+                <h4>Resources e Data Sources</h4>
+
+                <pre><code class="language-yaml"># VPC e Networking
+resource "aws_vpc" "main" {
+  cidr_block           = "10.0.0.0/16"
+  enable_dns_hostnames = true
+  enable_dns_support   = true
+
+  tags = {
+    Name = "${var.project_name}-vpc"
+  }
+}
+
+resource "aws_subnet" "public" {
+  count             = 2
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.${count.index + 1}.0/24"
+  availability_zone = data.aws_availability_zones.available.names[count.index]
+
+  map_public_ip_on_launch = true
+
+  tags = {
+    Name = "${var.project_name}-public-${count.index + 1}"
+    Type = "public"
+  }
+}
+
+# Data source: legge dati esistenti (non crea risorse)
+data "aws_availability_zones" "available" {
+  state = "available"
+}
+
+data "aws_ami" "amazon_linux" {
+  most_recent = true
+  owners      = ["amazon"]
+
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+  }
+}
+
+# EC2 Instance
+resource "aws_instance" "app" {
+  ami                    = data.aws_ami.amazon_linux.id
+  instance_type          = var.instance_type
+  subnet_id              = aws_subnet.public[0].id
+  vpc_security_group_ids = [aws_security_group.app.id]
+
+  user_data = &lt;&lt;-EOF
+    #!/bin/bash
+    yum update -y
+    yum install -y docker
+    systemctl start docker
+    systemctl enable docker
+  EOF
+
+  tags = {
+    Name = "${var.project_name}-app-server"
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+# Security Group
+resource "aws_security_group" "app" {
+  name        = "${var.project_name}-app-sg"
+  description = "Security group for application servers"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description = "HTTP"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "HTTPS"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+# Outputs
+output "instance_public_ip" {
+  description = "Public IP of the EC2 instance"
+  value       = aws_instance.app.public_ip
+}
+
+output "vpc_id" {
+  description = "ID of the VPC"
+  value       = aws_vpc.main.id
+}</code></pre>
+
+                <h3>Terraform Workflow</h3>
+
+                <div class="diagram">
+                    <pre>
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        TERRAFORM WORKFLOW                                │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  1. WRITE          2. PLAN           3. APPLY          4. DESTROY       │
+│  ─────────         ────────          ─────────         ───────────      │
+│                                                                          │
+│  ┌─────────┐      ┌─────────┐       ┌─────────┐       ┌─────────┐      │
+│  │ .tf     │ ───▶ │terraform│ ───▶  │terraform│ ───▶  │terraform│      │
+│  │ files   │      │  plan   │       │  apply  │       │ destroy │      │
+│  └─────────┘      └────┬────┘       └────┬────┘       └─────────┘      │
+│                        │                 │                               │
+│                        ▼                 ▼                               │
+│                   ┌─────────┐       ┌─────────┐                         │
+│                   │ Execution│       │  State  │                         │
+│                   │   Plan   │       │  File   │                         │
+│                   │(preview) │       │(.tfstate)│                        │
+│                   └─────────┘       └─────────┘                         │
+│                                                                          │
+│  "Cosa voglio"   "Cosa cambierà"  "Applica"      "Distruggi tutto"     │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+                    </pre>
+                </div>
+
+                <pre><code class="language-bash"># Inizializza il working directory (scarica providers, configura backend)
+terraform init
+
+# Mostra cosa verrà creato/modificato/distrutto (DRY RUN)
+terraform plan -out=tfplan
+
+# Applica le modifiche (crea/modifica l'infrastruttura reale)
+terraform apply tfplan
+
+# Mostra lo stato corrente
+terraform show
+
+# Lista tutte le risorse gestite
+terraform state list
+
+# Distrugge TUTTA l'infrastruttura (ATTENZIONE!)
+terraform destroy</code></pre>
+
+                <h3>Terraform State: Il Cuore di Terraform</h3>
+
+                <p>Il <strong>state file</strong> (<code>terraform.tfstate</code>) è il database di Terraform: mappa le risorse nel codice alle risorse reali nel cloud. Senza lo state, Terraform non saprebbe cosa esiste già e cosa deve creare.</p>
+
+                <div class="info-box warning">
+                    <h4>State File: Trattalo con Cura!</h4>
+                    <ul>
+                        <li><strong>Contiene secrets</strong>: password DB, chiavi API in plain text. MAI committarlo in Git!</li>
+                        <li><strong>Remote backend obbligatorio per team</strong>: S3 + DynamoDB (locking), Terraform Cloud, GCS</li>
+                        <li><strong>State locking</strong>: Previene modifiche concorrenti che corromperebbero lo state</li>
+                        <li><strong>State backup</strong>: Abilita versioning sul bucket S3</li>
+                    </ul>
+                </div>
+
+                <h3>Terraform Modules: Riusabilità</h3>
+
+                <p>I <strong>modules</strong> sono container riusabili di risorse Terraform. Invece di copiare codice, crei un modulo e lo richiami con parametri diversi.</p>
+
+                <pre><code class="language-yaml"># modules/vpc/main.tf
+variable "cidr_block" {
+  type = string
+}
+
+variable "environment" {
+  type = string
+}
+
+resource "aws_vpc" "this" {
+  cidr_block = var.cidr_block
+
+  tags = {
+    Name        = "${var.environment}-vpc"
+    Environment = var.environment
+  }
+}
+
+output "vpc_id" {
+  value = aws_vpc.this.id
+}
+
+# ─────────────────────────────────────────────
+
+# environments/prod/main.tf - Uso del modulo
+module "vpc" {
+  source = "../../modules/vpc"
+
+  cidr_block  = "10.0.0.0/16"
+  environment = "prod"
+}
+
+module "vpc_staging" {
+  source = "../../modules/vpc"
+
+  cidr_block  = "10.1.0.0/16"
+  environment = "staging"
+}
+
+# Puoi anche usare moduli dalla Terraform Registry
+module "eks" {
+  source  = "terraform-aws-modules/eks/aws"
+  version = "~> 19.0"
+
+  cluster_name    = "my-cluster"
+  cluster_version = "1.28"
+  # ... altri parametri
+}</code></pre>
+
+                <h3>Best Practices Terraform</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Practice</th>
+                            <th>Descrizione</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Remote State</strong></td>
+                            <td>Usa sempre un backend remoto (S3, GCS, Terraform Cloud) per collaborazione e locking</td>
+                        </tr>
+                        <tr>
+                            <td><strong>State per Environment</strong></td>
+                            <td>Separa lo state per ambiente (dev, staging, prod) per isolamento e blast radius ridotto</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Plan in CI/CD</strong></td>
+                            <td>terraform plan automatico su ogni PR, apply solo dopo merge/approval</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Lock Versions</strong></td>
+                            <td>Specifica versioni esatte di Terraform e providers nel required_providers</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Use Modules</strong></td>
+                            <td>Non ripetere codice: crea moduli per pattern comuni (VPC, EKS, RDS)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Validate & Format</strong></td>
+                            <td>terraform validate e terraform fmt in pre-commit hooks</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- LLM & AI Integration Section -->
+            <section class="section" id="modulo6-ai">
+                <h2>LLM & AI Integration nelle Applicazioni</h2>
+
+                <p>L'integrazione di <strong>Large Language Models</strong> (LLM) nelle applicazioni enterprise è una delle competenze più richieste nel 2026. Questa sezione copre i pattern architetturali fondamentali: <strong>RAG</strong>, <strong>Vector Databases</strong> e <strong>Embeddings</strong>.</p>
+
+                <h3>Il Problema: Limitazioni degli LLM</h3>
+
+                <p>Gli LLM come GPT-4, Claude, Llama hanno limitazioni significative per applicazioni enterprise:</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Limitazione</th>
+                            <th>Problema</th>
+                            <th>Soluzione</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Knowledge Cutoff</strong></td>
+                            <td>Non conoscono eventi dopo il training</td>
+                            <td>RAG con dati aggiornati</td>
+                        </tr>
+                        <tr>
+                            <td><strong>No Private Data</strong></td>
+                            <td>Non conoscono i tuoi documenti interni</td>
+                            <td>RAG con knowledge base aziendale</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Hallucinations</strong></td>
+                            <td>Inventano informazioni plausibili ma false</td>
+                            <td>RAG + citazione fonti</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Context Window</strong></td>
+                            <td>Limite di token per richiesta (es. 128K)</td>
+                            <td>Retrieval selettivo dei chunk rilevanti</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>RAG: Retrieval Augmented Generation</h3>
+
+                <p><strong>RAG</strong> è un pattern architetturale che combina la potenza generativa degli LLM con la precisione del retrieval da una knowledge base. Invece di fare fine-tuning (costoso, lento), "aumenti" il prompt con contesto rilevante recuperato al momento.</p>
+
+                <div class="diagram">
+                    <pre>
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          RAG ARCHITECTURE                                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  ┌─────────────────────────────── INDEXING PIPELINE ───────────────────────┐│
+│  │                                                                          ││
+│  │  Documents    ──▶   Chunking    ──▶   Embedding   ──▶   Vector DB       ││
+│  │  (PDF, HTML,       (Split into       Model            (Store vectors    ││
+│  │   Markdown)         ~512 tokens)     (ada-002,         + metadata)      ││
+│  │                                       all-MiniLM)                        ││
+│  └──────────────────────────────────────────────────────────────────────────┘│
+│                                                                              │
+│  ┌─────────────────────────────── QUERY PIPELINE ──────────────────────────┐│
+│  │                                                                          ││
+│  │  User Query ─┬──▶ Embed Query ──▶ Similarity  ──▶ Top-K    ──▶ Prompt  ││
+│  │              │                     Search         Chunks       Builder  ││
+│  │              │                     (Vector DB)                          ││
+│  │              │                                                          ││
+│  │              │    ┌─────────────────────────────────────────────────┐   ││
+│  │              │    │  AUGMENTED PROMPT                               │   ││
+│  │              │    │  ─────────────────                               │   ││
+│  │              │    │  Context:                                        │   ││
+│  │              │    │  [Chunk 1: "La policy aziendale prevede..."]     │   ││
+│  │              │    │  [Chunk 2: "Il processo di rimborso..."]         │   ││
+│  │              │    │                                                  │   ││
+│  │              └───▶│  Question: "Come richiedo un rimborso?"          │   ││
+│  │                   │                                                  │   ││
+│  │                   │  Instructions: Rispondi basandoti solo sul      │   ││
+│  │                   │  contesto fornito. Cita le fonti.               │   ││
+│  │                   └────────────────────────┬────────────────────────┘   ││
+│  │                                            │                            ││
+│  │                                            ▼                            ││
+│  │                                    ┌──────────────┐                     ││
+│  │                                    │     LLM      │                     ││
+│  │                                    │  (GPT-4,     │                     ││
+│  │                                    │   Claude)    │                     ││
+│  │                                    └──────┬───────┘                     ││
+│  │                                           │                             ││
+│  │                                           ▼                             ││
+│  │                                    Response with                        ││
+│  │                                    citations                            ││
+│  └──────────────────────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────────────────────┘
+                    </pre>
+                </div>
+
+                <h4>Embeddings: Il Cuore Semantico</h4>
+
+                <p>Gli <strong>embeddings</strong> sono rappresentazioni numeriche (vettori) del significato semantico del testo. Testi con significato simile hanno vettori "vicini" nello spazio multidimensionale.</p>
+
+                <pre><code class="language-java">// Esempio concettuale di embeddings
+"Come richiedere un rimborso?"  → [0.12, -0.34, 0.87, ..., 0.23]  // 1536 dimensioni
+"Procedura per il refund"       → [0.11, -0.35, 0.85, ..., 0.24]  // Molto simile!
+"Meteo di domani"               → [0.92, 0.11, -0.45, ..., 0.78]  // Molto diverso
+
+// Cosine similarity
+similarity("rimborso", "refund") = 0.95  // Alta
+similarity("rimborso", "meteo")  = 0.12  // Bassa</code></pre>
+
+                <h4>Implementazione RAG con Spring AI</h4>
+
+                <pre><code class="language-java">// pom.xml
+// spring-ai-openai-spring-boot-starter
+// spring-ai-pgvector-store-spring-boot-starter
+
+@Configuration
+public class RagConfig {
+
+    @Bean
+    public EmbeddingModel embeddingModel() {
+        return new OpenAiEmbeddingModel(
+            new OpenAiApi(System.getenv("OPENAI_API_KEY"))
+        );
+    }
+
+    @Bean
+    public VectorStore vectorStore(EmbeddingModel embeddingModel, JdbcTemplate jdbc) {
+        return new PgVectorStore(jdbc, embeddingModel);
+    }
+}
+
+@Service
+public class DocumentIngestionService {
+
+    private final VectorStore vectorStore;
+
+    // 1. INDEXING: Carica documenti nel vector store
+    public void ingestDocuments(List&lt;Resource&gt; documents) {
+        // Text Splitter: divide documenti in chunks
+        TokenTextSplitter splitter = new TokenTextSplitter(
+            500,    // chunk size (tokens)
+            100,    // overlap (per mantenere contesto)
+            5,      // min chunk size
+            10000,  // max chunks per doc
+            true    // keep separator
+        );
+
+        for (Resource doc : documents) {
+            // Parse document (PDF, HTML, etc.)
+            TikaDocumentReader reader = new TikaDocumentReader(doc);
+            List&lt;Document&gt; parsed = reader.get();
+
+            // Split in chunks
+            List&lt;Document&gt; chunks = splitter.apply(parsed);
+
+            // Add metadata per ogni chunk
+            chunks.forEach(chunk -> {
+                chunk.getMetadata().put("source", doc.getFilename());
+                chunk.getMetadata().put("ingested_at", Instant.now().toString());
+            });
+
+            // Store: embedding automatico + salvataggio in vector DB
+            vectorStore.add(chunks);
+        }
+    }
+}
+
+@Service
+public class RagChatService {
+
+    private final VectorStore vectorStore;
+    private final ChatClient chatClient;
+
+    // 2. RETRIEVAL + GENERATION
+    public String askQuestion(String userQuestion) {
+        // Similarity search nel vector store
+        List&lt;Document&gt; relevantDocs = vectorStore.similaritySearch(
+            SearchRequest.query(userQuestion)
+                .withTopK(5)                    // Top 5 chunks più rilevanti
+                .withSimilarityThreshold(0.7)  // Soglia minima di similarità
+        );
+
+        // Costruisci il prompt con contesto
+        String context = relevantDocs.stream()
+            .map(doc -> String.format(
+                "[Source: %s]\n%s",
+                doc.getMetadata().get("source"),
+                doc.getContent()
+            ))
+            .collect(Collectors.joining("\n\n---\n\n"));
+
+        String systemPrompt = """
+            Sei un assistente aziendale. Rispondi alle domande basandoti
+            ESCLUSIVAMENTE sul contesto fornito. Se l'informazione non è
+            nel contesto, rispondi "Non ho informazioni su questo argomento".
+            Cita sempre la fonte tra parentesi [Source: nomefile].
+            """;
+
+        String userPrompt = String.format("""
+            CONTESTO:
+            %s
+
+            DOMANDA:
+            %s
+            """, context, userQuestion);
+
+        // Chiamata LLM
+        return chatClient.prompt()
+            .system(systemPrompt)
+            .user(userPrompt)
+            .call()
+            .content();
+    }
+}</code></pre>
+
+                <h3>Vector Databases: Dove Vivono gli Embeddings</h3>
+
+                <p>I <strong>Vector Databases</strong> sono database specializzati per storage e ricerca efficiente di vettori ad alta dimensionalità. Usano algoritmi come <strong>HNSW</strong> (Hierarchical Navigable Small World) o <strong>IVF</strong> (Inverted File Index) per ricerca approssimata in tempo sub-lineare.</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Database</th>
+                            <th>Tipo</th>
+                            <th>Pro</th>
+                            <th>Contro</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Pinecone</strong></td>
+                            <td>Managed SaaS</td>
+                            <td>Zero ops, scalabile, filtering metadata</td>
+                            <td>Vendor lock-in, costo</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Weaviate</strong></td>
+                            <td>Open source</td>
+                            <td>GraphQL API, hybrid search, self-hosted</td>
+                            <td>Più complesso da gestire</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Milvus</strong></td>
+                            <td>Open source</td>
+                            <td>Altamente scalabile, multi-index</td>
+                            <td>Curva di apprendimento</td>
+                        </tr>
+                        <tr>
+                            <td><strong>pgvector</strong></td>
+                            <td>PostgreSQL extension</td>
+                            <td>Usa il DB esistente, ACID, SQL familiare</td>
+                            <td>Performance limitate su scala molto grande</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Qdrant</strong></td>
+                            <td>Open source</td>
+                            <td>Rust (performance), filtering avanzato</td>
+                            <td>Ecosistema più giovane</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h4>pgvector: Vector Search in PostgreSQL</h4>
+
+                <pre><code class="language-sql">-- Abilita l'estensione
+CREATE EXTENSION IF NOT EXISTS vector;
+
+-- Tabella per documenti con embedding
+CREATE TABLE documents (
+    id SERIAL PRIMARY KEY,
+    content TEXT NOT NULL,
+    metadata JSONB,
+    embedding vector(1536),  -- OpenAI ada-002 = 1536 dimensioni
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indice per ricerca veloce (HNSW)
+CREATE INDEX ON documents
+USING hnsw (embedding vector_cosine_ops)
+WITH (m = 16, ef_construction = 64);
+
+-- Query: trova i 5 documenti più simili
+SELECT id, content, metadata,
+       1 - (embedding &lt;=&gt; '[0.12, -0.34, ...]'::vector) AS similarity
+FROM documents
+WHERE metadata->>'category' = 'policies'  -- Filtering
+ORDER BY embedding &lt;=&gt; '[0.12, -0.34, ...]'::vector
+LIMIT 5;</code></pre>
+
+                <h3>Advanced RAG Patterns</h3>
+
+                <div class="info-box">
+                    <h4>Chunking Strategies</h4>
+                    <p>La qualità del RAG dipende molto da come dividi i documenti:</p>
+                    <ul>
+                        <li><strong>Fixed-size chunks</strong>: Semplice, ma può tagliare frasi a metà</li>
+                        <li><strong>Sentence-based</strong>: Rispetta i confini delle frasi</li>
+                        <li><strong>Recursive/Hierarchical</strong>: Prova separatori diversi (paragrafo → frase → caratteri)</li>
+                        <li><strong>Semantic chunking</strong>: Usa embedding per trovare punti di rottura naturali</li>
+                    </ul>
+                </div>
+
+                <h4>Hybrid Search: Best of Both Worlds</h4>
+
+                <p>La <strong>Hybrid Search</strong> combina ricerca semantica (vector) con ricerca keyword (BM25/full-text). Utile quando l'utente cerca termini esatti (codici prodotto, nomi) che la ricerca semantica potrebbe perdere.</p>
+
+                <pre><code class="language-java">// Pseudo-codice Hybrid Search
+public List&lt;Document&gt; hybridSearch(String query) {
+    // 1. Vector search (semantica)
+    List&lt;Document&gt; semanticResults = vectorStore.similaritySearch(query, topK=10);
+
+    // 2. Keyword search (BM25/full-text)
+    List&lt;Document&gt; keywordResults = fullTextSearch(query, topK=10);
+
+    // 3. Reciprocal Rank Fusion (RRF) - combina i ranking
+    Map&lt;String, Double&gt; scores = new HashMap&lt;&gt;();
+    int k = 60; // parametro RRF
+
+    for (int i = 0; i &lt; semanticResults.size(); i++) {
+        String id = semanticResults.get(i).getId();
+        scores.merge(id, 1.0 / (k + i + 1), Double::sum);
+    }
+
+    for (int i = 0; i &lt; keywordResults.size(); i++) {
+        String id = keywordResults.get(i).getId();
+        scores.merge(id, 1.0 / (k + i + 1), Double::sum);
+    }
+
+    // 4. Ordina per score combinato
+    return scores.entrySet().stream()
+        .sorted(Map.Entry.&lt;String, Double&gt;comparingByValue().reversed())
+        .limit(5)
+        .map(e -> getDocumentById(e.getKey()))
+        .toList();
+}</code></pre>
+
+                <h4>Query Transformation</h4>
+
+                <p>A volte la query dell'utente è troppo vaga o ambigua. Tecniche di <strong>query transformation</strong>:</p>
+
+                <ul>
+                    <li><strong>Query Expansion</strong>: Usa l'LLM per generare query alternative ("rimborso" → "rimborso", "refund", "restituzione denaro")</li>
+                    <li><strong>HyDE (Hypothetical Document Embedding)</strong>: Genera un documento ipotetico che risponderebbe alla query, poi cerca documenti simili a quello</li>
+                    <li><strong>Step-back Prompting</strong>: Risali a una domanda più generale prima di cercare</li>
+                </ul>
+
+                <h3>Considerazioni Architetturali</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Aspetto</th>
+                            <th>Considerazione</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Latency</strong></td>
+                            <td>RAG aggiunge ~200-500ms (embedding query + vector search). Cache le query frequenti.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Cost</strong></td>
+                            <td>Embedding: ~$0.0001/1K tokens. LLM: ~$0.01-0.03/1K tokens. Il contesto RAG aumenta i token.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Freshness</strong></td>
+                            <td>I documenti cambiano? Implementa pipeline di re-indexing (incrementale o full).</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Security</strong></td>
+                            <td>Access control: filtra risultati per permessi utente. Non esporre dati sensibili nel contesto.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Evaluation</strong></td>
+                            <td>Metriche: Retrieval accuracy (hai trovato i chunk giusti?), Answer quality, Hallucination rate.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Quiz Section Modulo 6 -->
+            <section class="quiz-section" id="modulo6-quiz">
+                <h2>Interactive Challenge Quiz - Modulo 6</h2>
+                <p>Verifica la tua comprensione degli Advanced Topics 2026 con queste domande di livello Hard.</p>
+
+                <!-- Question 26 -->
+                <div class="quiz-question" data-correct="c">
+                    <h4><span>Q1.</span> In un sistema con OpenTelemetry, hai configurato il sampling al 10%. Un trace inizia nel servizio A, chiama B, poi C. Il trace è stato selezionato per il sampling in A. Cosa succede in B e C?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q26" id="q26a" value="a">
+                            <label for="q26a">B e C fanno sampling indipendente: potrebbero non tracciare le loro parti</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q26" id="q26b" value="b">
+                            <label for="q26b">B e C tracciano sempre perché il sampling si applica solo all'entry point</label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q26" id="q26c" value="c">
+                            <label for="q26c">B e C ereditano la decisione di sampling da A via context propagation</label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q26" id="q26d" value="d">
+                            <label for="q26d">B e C controllano il collector centrale per decidere se tracciare</label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q26')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q26"></div>
+                </div>
+
+                <!-- Question 27 -->
+                <div class="quiz-question" data-correct="b">
+                    <h4><span>Q2.</span> Stai facendo terraform plan e vedi: <code>aws_instance.app must be replaced</code>. Cosa significa e perché è importante?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q27" id="q27a" value="a">
+                            <label for="q27a">L'istanza verrà aggiornata in-place con le nuove configurazioni</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q27" id="q27b" value="b">
+                            <label for="q27b">L'istanza verrà distrutta e ricreata, causando downtime se non gestito</label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q27" id="q27c" value="c">
+                            <label for="q27c">Terraform creerà una nuova istanza mantenendo la vecchia come backup</label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q27" id="q27d" value="d">
+                            <label for="q27d">È solo un warning: l'istanza non verrà modificata senza conferma esplicita</label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q27')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q27"></div>
+                </div>
+
+                <!-- Question 28 -->
+                <div class="quiz-question" data-correct="d">
+                    <h4><span>Q3.</span> Nel tuo sistema RAG, gli utenti si lamentano che le risposte non trovano informazioni che sai essere nei documenti. La similarity threshold è 0.8. L'embedding model usa cosine similarity. Quale potrebbe essere il problema?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q28" id="q28a" value="a">
+                            <label for="q28a">I documenti sono troppo lunghi e superano la context window</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q28" id="q28b" value="b">
+                            <label for="q28b">Il vector database non ha abbastanza memoria per tutti gli embeddings</label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q28" id="q28c" value="c">
+                            <label for="q28c">L'LLM sta allucinando invece di usare il contesto fornito</label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q28" id="q28d" value="d">
+                            <label for="q28d">La threshold 0.8 è troppo alta: query diverse nel wording ma simili nel significato vengono scartate</label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q28')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q28"></div>
+                </div>
+
+                <!-- Question 29 -->
+                <div class="quiz-question" data-correct="a">
+                    <h4><span>Q4.</span> Il tuo Prometheus mostra che http_requests_total ha avuto un reset (drop a 0) alle 14:32. La query <code>rate(http_requests_total[5m])</code> alle 14:35 restituisce valori negativi. Perché e come risolvi?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q29" id="q29a" value="a">
+                            <label for="q29a">rate() non gestisce i reset: usa increase() o irate() che compensano automaticamente</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q29" id="q29b" value="b">
+                            <label for="q29b">Il counter è stato implementato male: dovrebbe usare un Gauge invece</label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q29" id="q29c" value="c">
+                            <label for="q29c">Prometheus ha un bug: i counter non dovrebbero mai resettarsi</label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q29" id="q29d" value="d">
+                            <label for="q29d">Devi aggiungere un filtro per escludere i punti dopo il reset</label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q29')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q29"></div>
+                </div>
+
+                <!-- Question 30 -->
+                <div class="quiz-question" data-correct="c">
+                    <h4><span>Q5.</span> Due sviluppatori eseguono terraform apply contemporaneamente sullo stesso state (senza state locking). Dev1 aggiunge una subnet, Dev2 modifica un security group. Qual è il rischio?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q30" id="q30a" value="a">
+                            <label for="q30a">Nessun rischio: Terraform serializza automaticamente le operazioni</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q30" id="q30b" value="b">
+                            <label for="q30b">Entrambe le modifiche falliranno con un errore di conflitto</label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q30" id="q30c" value="c">
+                            <label for="q30c">Lo state può corrompersi: il secondo apply potrebbe sovrascrivere lo state del primo</label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q30" id="q30d" value="d">
+                            <label for="q30d">Le risorse verranno create duplicate con nomi diversi</label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q30')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q30"></div>
+                </div>
+            </section>
+
+            <!-- Questions Section Modulo 6 -->
+            <section class="section" id="modulo6-questions">
+                <h2>Domande da Colloquio - Modulo 6</h2>
+
+                <div class="info-box">
+                    <h4>Q: Spiega la differenza tra monitoring e observability. Perché l'observability è importante nei sistemi distribuiti?</h4>
+                    <p><strong>Risposta attesa:</strong> Il monitoring è reattivo: definisci metriche e alert in anticipo per problemi che ti aspetti. Funziona bene per problemi noti ("CPU alta → alert"). L'observability è esplorativa: ti permette di investigare problemi che non avevi previsto, correlando dati (logs, metrics, traces) per capire "perché il sistema si comporta così". Nei sistemi distribuiti, il numero di possibili failure mode cresce esponenzialmente con i servizi. Non puoi prevedere ogni combinazione di fallimenti, quindi hai bisogno di dati ricchi (traces, structured logs) per fare debugging post-hoc.</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>Q: Come funziona il context propagation in distributed tracing? Cosa succede se un servizio non lo implementa?</h4>
+                    <p><strong>Risposta attesa:</strong> Il context propagation passa trace ID e span ID tra servizi, tipicamente via HTTP headers standardizzati (W3C Trace Context: <code>traceparent</code>, <code>tracestate</code>) o headers specifici del vendor (Jaeger: <code>uber-trace-id</code>). Il servizio chiamante inietta il contesto negli headers, il chiamato lo estrae e lo usa per creare span figli. Se un servizio non implementa la propagation, il trace si "rompe": gli span dopo quel servizio sembreranno trace separati, perdendo la correlazione. Il trace risulterà incompleto e il troubleshooting sarà difficile.</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>Q: Terraform plan mostra che una risorsa "must be replaced". Come eviti downtime?</h4>
+                    <p><strong>Risposta attesa:</strong> "Must be replaced" significa che la modifica richiede distruzione e ricreazione (es. cambio di AMI, instance type su alcuni cloud, cambio di subnet). Per evitare downtime: 1) Usa <code>lifecycle { create_before_destroy = true }</code> per creare la nuova risorsa prima di distruggere la vecchia. 2) Per risorse critiche, implementa blue-green: crea una nuova risorsa con nome diverso, sposta il traffico, poi rimuovi la vecchia dal codice. 3) Per ASG/managed services, il replacement può essere gestito dal cloud provider (es. ASG instance refresh). Importante: fai sempre <code>terraform plan</code> prima di apply e review attento dei "replace".</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>Q: Come gestisci i secrets in Terraform? Cosa NON dovresti mai fare?</h4>
+                    <p><strong>Risposta attesa:</strong> MAI: 1) Hardcodare secrets nei .tf files, 2) Committare tfvars con secrets in Git, 3) Usare local state (contiene secrets in plain text). Best practices: 1) Usa secret managers (AWS Secrets Manager, HashiCorp Vault) e referenziali via data sources. 2) Passa secrets come variabili d'ambiente (<code>TF_VAR_db_password</code>). 3) Usa remote state con encryption at rest (S3 con SSE). 4) Per CI/CD, usa secret injection della piattaforma (GitHub Secrets, GitLab CI variables). 5) Considera strumenti come SOPS per encrypted tfvars se necessario.</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>Q: Spiega come funziona RAG e perché lo useresti invece di fine-tuning.</h4>
+                    <p><strong>Risposta attesa:</strong> RAG (Retrieval Augmented Generation) combina ricerca semantica con generazione LLM. Workflow: 1) Indexing: documenti → chunking → embedding → vector store. 2) Query: query utente → embedding → similarity search → top-K chunks → prompt augmentation → LLM → risposta. Preferisco RAG a fine-tuning perché: 1) Più economico e veloce (no training). 2) Dati aggiornabili senza re-training (basta re-indicizzare). 3) Citazione delle fonti (l'LLM "mostra il suo lavoro"). 4) Riduce hallucination (il modello risponde basandosi su contesto concreto). Fine-tuning è meglio per cambiare lo "stile" o insegnare task nuovi, non per knowledge injection.</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>Q: Quali sono i trade-off nella scelta della chunk size per RAG?</h4>
+                    <p><strong>Risposta attesa:</strong> Chunk piccoli (~256 token): Pro: più precisi nel retrieval (meno noise), più chunks nel context budget. Contro: possono perdere contesto necessario (frase senza premessa), più chunks da processare. Chunk grandi (~1024 token): Pro: più contesto per chunk, meno rischio di tagliare informazioni correlate. Contro: più noise (informazioni irrilevanti nel chunk), meno chunks nel context budget, similarity score "diluito". Best practice: inizia con ~512 token + overlap di ~50 token. Poi A/B testa basandoti su retrieval accuracy. Per documenti strutturati (codice, legal), usa semantic chunking rispettando i confini naturali.</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>Q: Come implementeresti l'access control in un sistema RAG con documenti di diversi livelli di confidenzialità?</h4>
+                    <p><strong>Risposta attesa:</strong> Due approcci principali: 1) Filtering post-retrieval: retrieval aperto, poi filtra i risultati in base ai permessi dell'utente. Semplice ma inefficiente (recuperi documenti che poi scarti). 2) Filtering pre-retrieval (preferito): aggiungi metadata ai chunks (es. <code>access_level</code>, <code>department</code>), poi usa metadata filtering nella query vector (es. pgvector: <code>WHERE metadata->>'access_level' &lt;= user_level</code>). Questo è supportato nativamente da Pinecone, Weaviate, etc. Attenzione: il prompt finale NON deve mai contenere documenti non autorizzati, anche se l'LLM li "ignorerebbe" - potrebbero essere estratti con prompt injection.</p>
+                </div>
+            </section>
+
         </main>
     </div>
 
@@ -6120,6 +7591,52 @@ spec:
                     a: '❌ Sbagliato. Fix forward richiede tempo (diagnosi, fix, test, build, deploy). Con un bug critico in produzione, vuoi minimizzare il tempo di esposizione. Il rollback istantaneo è sempre preferibile per bug critici.',
                     b: '❌ Sbagliato. Rolling update è lento e non sfrutti il vantaggio del Blue-Green. Hai già l\'ambiente Blue pronto, perché fare un rolling update quando puoi switchare istantaneamente?',
                     d: '❌ Sbagliato. Scalare Green a 0 è inutilmente lento e non garantisce uno switch pulito. Il load balancer o Service già punta a Blue, basta cambiare quella configurazione.'
+                }
+            },
+            // Modulo 6: Advanced Topics 2026
+            q26: {
+                correct: 'c',
+                correctText: '✅ Corretto! Il context propagation è fondamentale: quando A decide di tracciare (campionare) un trace, quella decisione viene propagata a B e C via headers (es. W3C traceparent). Ogni servizio downstream onora la decisione del parent. Questo garantisce che un trace sia completo o completamente assente, mai parziale. Se ogni servizio decidesse indipendentemente, avresti traces "rotti" impossibili da correlare.',
+                incorrectText: {
+                    a: '❌ Sbagliato. Se B e C facessero sampling indipendente, un trace campionato al 10% in A avrebbe solo 1% di probabilità di essere completo (0.1 × 0.1 × 0.1). Il context propagation esiste proprio per evitare questo problema.',
+                    b: '❌ Sbagliato. Il sampling non si applica "solo all\'entry point" in modo magico. È il context propagation esplicito (via headers) che porta la decisione di sampling ai servizi downstream.',
+                    d: '❌ Sbagliato. I servizi non consultano il collector per decidere se tracciare. La decisione è presa localmente e propagata via headers HTTP/gRPC. Il collector riceve solo i dati già generati.'
+                }
+            },
+            q27: {
+                correct: 'b',
+                correctText: '✅ Corretto! "Must be replaced" (o "forces replacement") significa che la modifica richiesta non può essere applicata in-place. Terraform distruggerà la risorsa esistente e ne creerà una nuova. Per un\'istanza EC2, questo significa downtime: l\'istanza viene terminata, poi ne viene creata una nuova con nuovo IP, nuovo instance ID, etc. È critico notare questi "replace" nel plan e usare create_before_destroy o strategie blue-green per evitare downtime.',
+                incorrectText: {
+                    a: '❌ Sbagliato. "In-place update" è indicato da "will be updated" nel plan, non "must be replaced". Replace significa distruzione + ricreazione.',
+                    c: '❌ Sbagliato. Di default Terraform fa destroy-then-create, non crea backup. Solo con lifecycle { create_before_destroy = true } viene creata prima la nuova risorsa.',
+                    d: '❌ Sbagliato. Non è solo un warning: se fai apply, la risorsa VERRÀ distrutta e ricreata. Il plan ti sta avvisando di cosa succederà, non chiedendo conferma.'
+                }
+            },
+            q28: {
+                correct: 'd',
+                correctText: '✅ Corretto! Una similarity threshold di 0.8 (80%) è molto alta per cosine similarity su embeddings. Query semanticamente equivalenti ma con wording diverso (es. "come faccio il rimborso" vs "procedura restituzione") potrebbero avere similarity 0.7-0.75 e essere scartate. Abbassare a 0.6-0.7 cattura più risultati rilevanti. Il trade-off è più noise, che può essere filtrato con re-ranking o aumentando top-K.',
+                incorrectText: {
+                    a: '❌ Sbagliato. La context window riguarda l\'LLM, non il retrieval. Se i documenti fossero troppo lunghi, il problema sarebbe nella generazione (risposta troncata), non nel retrieval (documenti non trovati).',
+                    b: '❌ Sbagliato. Se il vector DB non avesse memoria sufficiente, avresti errori di sistema o crash, non semplicemente risultati mancanti. Gli embeddings sono relativamente piccoli (pochi KB ciascuno).',
+                    c: '❌ Sbagliato. Il problema descritto è che i documenti non vengono TROVATI nel retrieval, non che l\'LLM li ignora. L\'hallucination è un problema diverso (rispondere senza contesto).'
+                }
+            },
+            q29: {
+                correct: 'a',
+                correctText: '✅ Corretto! Questa è una "gotcha" classica di Prometheus. In realtà, rate() E increase() gestiscono automaticamente i counter reset (restart dell\'applicazione). Se vedi valori negativi, probabilmente stai usando una raw subtraction invece di rate/increase, oppure c\'è un problema di clock skew. La funzione rate() calcola (valore_finale - valore_iniziale) / tempo, ma detecta i reset e compensa. Il problema potrebbe essere reale se usi resets() che conta i reset senza compensare.',
+                incorrectText: {
+                    b: '❌ Sbagliato. I counter sono corretti per contare eventi cumulativi. I Gauge sono per valori che possono salire e scendere (temperatura, connessioni attive). Un http_requests_total DEVE essere un counter.',
+                    c: '❌ Sbagliato. I counter resettano legittimamente quando l\'applicazione riavvia. È comportamento normale e atteso. Prometheus gestisce questo caso con rate()/increase().',
+                    d: '❌ Sbagliato. Non devi filtrare manualmente i punti. Le funzioni rate() e increase() di Prometheus gestiscono automaticamente i reset. Se vedi negativi, il problema è altrove (query sbagliata, scrape interval, clock skew).'
+                }
+            },
+            q30: {
+                correct: 'c',
+                correctText: '✅ Corretto! Senza state locking, entrambi gli apply leggono lo stesso state iniziale, fanno le loro modifiche al cloud, poi scrivono lo state finale. Il secondo a scrivere sovrascrive lo state del primo, "dimenticando" le risorse create dal primo. Risultato: risorse "orphaned" nel cloud (esistono ma Terraform non le conosce) o state corrotto. Per questo si usa DynamoDB (AWS) o altri sistemi per state locking.',
+                incorrectText: {
+                    a: '❌ Sbagliato. Terraform non serializza automaticamente nulla. È responsabilità dell\'utente/team configurare state locking con DynamoDB, Consul, o Terraform Cloud.',
+                    b: '❌ Sbagliato. Senza locking, non c\'è nessun errore di conflitto. Entrambi gli apply procedono "felicemente" e il problema emerge dopo, quando lo state è già corrotto.',
+                    d: '❌ Sbagliato. Le risorse non vengono duplicate automaticamente. Il problema è nello STATE, non nelle risorse cloud. Una delle modifiche viene "persa" dallo state tracking.'
                 }
             }
         };
