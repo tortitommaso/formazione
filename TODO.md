@@ -142,6 +142,84 @@
 
 ---
 
+### DA COMPLETARE
+
+- [ ] **Modulo 9: API Design**
+  - [ ] REST Best Practices:
+    - [ ] Resource naming conventions
+    - [ ] HTTP methods e status codes
+    - [ ] Idempotency
+    - [ ] Pagination (offset vs cursor)
+    - [ ] Filtering, sorting, searching
+    - [ ] HATEOAS
+  - [ ] Versioning strategies (URL, header, query param)
+  - [ ] Error handling e formato errori
+  - [ ] Rate limiting e throttling
+  - [ ] API Documentation (OpenAPI/Swagger)
+  - [ ] GraphQL vs REST vs gRPC (quando usare)
+  - [ ] Quiz interattivo
+  - [ ] Domande da colloquio
+
+- [ ] **Modulo 10: Security**
+  - [ ] OWASP Top 10:
+    - [ ] Injection (SQL, NoSQL, Command)
+    - [ ] Broken Authentication
+    - [ ] XSS (Cross-Site Scripting)
+    - [ ] CSRF (Cross-Site Request Forgery)
+    - [ ] Security Misconfiguration
+    - [ ] Sensitive Data Exposure
+  - [ ] Authentication patterns:
+    - [ ] Session-based vs Token-based
+    - [ ] JWT deep dive (structure, signing, validation)
+    - [ ] OAuth 2.0 flows
+    - [ ] OpenID Connect
+  - [ ] Authorization (RBAC, ABAC)
+  - [ ] Secrets management
+  - [ ] HTTPS, TLS, certificate management
+  - [ ] Secure coding practices
+  - [ ] Quiz interattivo
+  - [ ] Domande da colloquio
+
+- [ ] **Modulo 11: DDD & Clean Architecture**
+  - [ ] Domain Driven Design:
+    - [ ] Ubiquitous Language
+    - [ ] Bounded Contexts
+    - [ ] Entities vs Value Objects
+    - [ ] Aggregates e Aggregate Root
+    - [ ] Domain Events
+    - [ ] Repository pattern
+  - [ ] Clean Architecture:
+    - [ ] Dependency Rule
+    - [ ] Layers (Entities, Use Cases, Interface Adapters, Frameworks)
+    - [ ] Ports & Adapters (Hexagonal)
+  - [ ] Event Sourcing
+  - [ ] CQRS (Command Query Responsibility Segregation)
+  - [ ] Quiz interattivo
+  - [ ] Domande da colloquio
+
+- [ ] **Modulo 12: Data Structures Avanzate**
+  - [ ] Trees:
+    - [ ] Binary Search Tree (BST)
+    - [ ] Balanced trees (AVL, Red-Black) - concetti
+    - [ ] Trie (Prefix Tree)
+    - [ ] Operazioni e complessità
+  - [ ] Graphs:
+    - [ ] Rappresentazioni (adjacency list, matrix)
+    - [ ] BFS (Breadth-First Search)
+    - [ ] DFS (Depth-First Search)
+    - [ ] Shortest path (Dijkstra)
+    - [ ] Topological sort
+  - [ ] Heaps:
+    - [ ] Min-Heap, Max-Heap
+    - [ ] Priority Queue
+    - [ ] Heap sort
+  - [ ] Union-Find (Disjoint Set)
+  - [ ] Esercizi pratici con soluzioni
+  - [ ] Quiz interattivo
+  - [ ] Domande da colloquio
+
+---
+
 ## Note Tecniche
 
 - **File principale**: `index.html` (HTML5 autosufficiente con CSS e JS inline)
