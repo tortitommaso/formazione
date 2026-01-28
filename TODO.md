@@ -21,10 +21,6 @@
   - [x] Quiz interattivo (4 domande)
   - [x] ~~TDD~~ (rimosso su richiesta utente)
 
----
-
-### DA COMPLETARE
-
 - [x] **Modulo 3: Architettura & Scalabilità**
   - [x] Monoliti vs Microservizi (pro/contro, Modular Monolith)
   - [x] Pattern di resilienza:
@@ -101,21 +97,48 @@
   - [x] Quiz interattivo (5 domande, q26-q30)
   - [x] Domande da colloquio (7 domande con risposte)
 
-- [ ] **Modulo 7: Coding Challenges**
-  - [ ] LRU Cache (LinkedHashMap o custom implementation)
-    - [ ] Soluzione commentata Java/Python
-    - [ ] Analisi complessità O(1) get/put
-  - [ ] Valid Parentheses (Stack)
-    - [ ] Soluzione commentata
-    - [ ] Analisi complessità O(n)
-  - [ ] Merge Intervals
-    - [ ] Soluzione commentata
-    - [ ] Analisi complessità O(n log n)
-  - [ ] (Opzionale) Aggiungere altri esercizi classici:
-    - [ ] Two Sum
-    - [ ] Binary Search variations
-    - [ ] BFS/DFS su grafi
-  - [ ] Quiz interattivo sulle complessità
+- [x] **Modulo 7: Coding Challenges**
+  - [x] LRU Cache:
+    - [x] Approccio HashMap + Doubly Linked List (diagramma)
+    - [x] Soluzione commentata Java
+    - [x] Soluzione commentata Python (con OrderedDict)
+    - [x] Analisi complessità O(1) get/put
+    - [x] Errori comuni da evitare
+  - [x] Valid Parentheses:
+    - [x] Approccio Stack (diagramma step-by-step)
+    - [x] Soluzione commentata Java (due versioni)
+    - [x] Soluzione commentata Python
+    - [x] Analisi complessità O(n) time, O(n) space
+    - [x] Varianti del problema
+  - [x] Merge Intervals:
+    - [x] Approccio Sort + Linear Scan (diagramma)
+    - [x] Soluzione commentata Java
+    - [x] Soluzione commentata Python
+    - [x] Analisi complessità O(n log n)
+    - [x] Varianti del problema
+  - [x] Quiz interattivo (5 domande, q31-q35)
+  - [x] Domande da colloquio (6 domande con risposte)
+
+- [x] **Modulo 8: Paradigmi di Programmazione**
+  - [x] Programmazione Funzionale:
+    - [x] Pure Functions (con esempi Java)
+    - [x] Immutability (record Java, vantaggi)
+    - [x] First-Class Functions (Function, closure)
+    - [x] Higher-order functions (map, filter, reduce con diagramma)
+  - [x] Java Streams API:
+    - [x] Stream vs Collection
+    - [x] Operazioni Intermediate vs Terminal
+    - [x] Esempi completi (filter, map, flatMap, groupingBy, etc.)
+    - [x] Optional e null-safety (anti-pattern)
+    - [x] Parallel Streams (quando usare)
+  - [x] Confronto OOP vs FP:
+    - [x] Tabella comparativa
+    - [x] Quando usare cosa (diagramma decisionale)
+    - [x] Esempio pratico stesso problema in entrambi gli stili
+    - [x] Composizione di funzioni
+    - [x] Pattern funzionali (currying, memoization, Either)
+  - [x] Quiz interattivo (5 domande, q36-q40)
+  - [x] Domande da colloquio (6 domande con risposte)
 
 ---
 
@@ -138,6 +161,6 @@
 ## Convenzioni Codice
 
 - ID sezioni: `modulo{N}-{topic}` (es: `modulo3-cap-theorem`)
-- ID quiz: `q{N}` progressivo globale (ultimo usato: q30)
+- ID quiz: `q{N}` progressivo globale (ultimo usato: q40)
 - Diagrammi: ASCII art dentro `<div class="diagram"><pre>...</pre></div>`
 - Info box: `<div class="info-box">`, `.info-box.warning`, `.info-box.success`

@@ -528,6 +528,16 @@
                 <a href="#modulo6-quiz" class="nav-link nav-sublink">Quiz</a>
 
                 <a href="#modulo7" class="nav-link"><span>7. Coding Challenges</span></a>
+                <a href="#modulo7-lru" class="nav-link nav-sublink">LRU Cache</a>
+                <a href="#modulo7-parentheses" class="nav-link nav-sublink">Valid Parentheses</a>
+                <a href="#modulo7-intervals" class="nav-link nav-sublink">Merge Intervals</a>
+                <a href="#modulo7-quiz" class="nav-link nav-sublink">Quiz</a>
+
+                <a href="#modulo8" class="nav-link"><span>8. Paradigmi di Programmazione</span></a>
+                <a href="#modulo8-functional" class="nav-link nav-sublink">Programmazione Funzionale</a>
+                <a href="#modulo8-streams" class="nav-link nav-sublink">Java Streams</a>
+                <a href="#modulo8-comparison" class="nav-link nav-sublink">OOP vs FP</a>
+                <a href="#modulo8-quiz" class="nav-link nav-sublink">Quiz</a>
             </div>
         </nav>
 
@@ -7360,6 +7370,1441 @@ public List&lt;Document&gt; hybridSearch(String query) {
                 </div>
             </section>
 
+            <!-- ==================== MODULO 7: CODING CHALLENGES ==================== -->
+
+            <header class="module-header" id="modulo7">
+                <span class="module-tag">Modulo 7</span>
+                <h1>Coding Challenges</h1>
+                <p>Esercizi classici da colloquio tecnico con soluzioni commentate e analisi della complessità</p>
+            </header>
+
+            <!-- LRU Cache Section -->
+            <section class="section" id="modulo7-lru">
+                <h2>LRU Cache</h2>
+
+                <p>La <strong>LRU Cache</strong> (Least Recently Used Cache) è una delle strutture dati più richieste nei colloqui tecnici. Implementa una cache con capacità limitata che, quando è piena, rimuove l'elemento usato meno di recente.</p>
+
+                <div class="info-box">
+                    <h4>Requisiti del Problema</h4>
+                    <p>Implementa una struttura dati che supporti le seguenti operazioni in <strong>O(1)</strong>:</p>
+                    <ul>
+                        <li><code>get(key)</code>: Ritorna il valore se la chiave esiste, altrimenti -1</li>
+                        <li><code>put(key, value)</code>: Inserisce o aggiorna il valore. Se la cache è piena, rimuove l'elemento LRU</li>
+                    </ul>
+                </div>
+
+                <h3>Approccio: HashMap + Doubly Linked List</h3>
+
+                <p>Per ottenere O(1) sia per accesso che per rimozione, combiniamo due strutture:</p>
+                <ul>
+                    <li><strong>HashMap</strong>: accesso O(1) per chiave → nodo della lista</li>
+                    <li><strong>Doubly Linked List</strong>: rimozione O(1) e mantenimento dell'ordine di utilizzo</li>
+                </ul>
+
+                <div class="diagram">
+                    <pre>
+HashMap                           Doubly Linked List
+┌─────────────────┐              ┌──────────────────────────────────────────────┐
+│  key → Node     │              │                                              │
+├─────────────────┤              │  HEAD ←→ [A] ←→ [B] ←→ [C] ←→ TAIL          │
+│  "A" → Node[A]  │──────────────│──────────┘       │       │                  │
+│  "B" → Node[B]  │──────────────│──────────────────┘       │                  │
+│  "C" → Node[C]  │──────────────│──────────────────────────┘                  │
+└─────────────────┘              │                                              │
+                                 │  MRU (Most Recently Used) ←──────→ LRU      │
+                                 └──────────────────────────────────────────────┘
+
+Operazioni O(1):
+- get("B"): HashMap lookup → muovi Node[B] dopo HEAD
+- put("D"): rimuovi nodo prima di TAIL (LRU), inserisci dopo HEAD
+                    </pre>
+                </div>
+
+                <h3>Soluzione Java</h3>
+
+                <pre><code class="language-java">class LRUCache {
+
+    // Nodo della doubly linked list
+    private class Node {
+        int key, value;
+        Node prev, next;
+
+        Node(int key, int value) {
+            this.key = key;
+            this.value = value;
+        }
+    }
+
+    private final int capacity;
+    private final Map&lt;Integer, Node&gt; cache;  // HashMap per O(1) lookup
+    private final Node head, tail;            // Sentinelle della lista
+
+    public LRUCache(int capacity) {
+        this.capacity = capacity;
+        this.cache = new HashMap&lt;&gt;();
+
+        // Inizializza sentinelle (semplificano edge cases)
+        head = new Node(0, 0);
+        tail = new Node(0, 0);
+        head.next = tail;
+        tail.prev = head;
+    }
+
+    public int get(int key) {
+        if (!cache.containsKey(key)) {
+            return -1;
+        }
+
+        Node node = cache.get(key);
+        // Aggiorna: questo nodo è stato usato ora (MRU)
+        removeNode(node);
+        addToFront(node);
+
+        return node.value;
+    }
+
+    public void put(int key, int value) {
+        if (cache.containsKey(key)) {
+            // Aggiorna valore esistente
+            Node node = cache.get(key);
+            node.value = value;
+            removeNode(node);
+            addToFront(node);
+        } else {
+            // Inserisci nuovo
+            if (cache.size() == capacity) {
+                // Rimuovi LRU (nodo prima di tail)
+                Node lru = tail.prev;
+                removeNode(lru);
+                cache.remove(lru.key);  // Importante: rimuovi anche dalla HashMap!
+            }
+
+            Node newNode = new Node(key, value);
+            cache.put(key, newNode);
+            addToFront(newNode);
+        }
+    }
+
+    // Helper: rimuove un nodo dalla lista (O(1) grazie ai puntatori)
+    private void removeNode(Node node) {
+        node.prev.next = node.next;
+        node.next.prev = node.prev;
+    }
+
+    // Helper: aggiunge un nodo subito dopo head (MRU position)
+    private void addToFront(Node node) {
+        node.next = head.next;
+        node.prev = head;
+        head.next.prev = node;
+        head.next = node;
+    }
+}</code></pre>
+
+                <h3>Soluzione Python</h3>
+
+                <pre><code class="language-python">from collections import OrderedDict
+
+class LRUCache:
+    """
+    Python ha OrderedDict che mantiene l'ordine di inserimento
+    e supporta move_to_end() in O(1) - perfetto per LRU!
+    """
+
+    def __init__(self, capacity: int):
+        self.capacity = capacity
+        self.cache = OrderedDict()
+
+    def get(self, key: int) -> int:
+        if key not in self.cache:
+            return -1
+
+        # Sposta alla fine (MRU)
+        self.cache.move_to_end(key)
+        return self.cache[key]
+
+    def put(self, key: int, value: int) -> None:
+        if key in self.cache:
+            # Aggiorna e sposta in fondo
+            self.cache[key] = value
+            self.cache.move_to_end(key)
+        else:
+            if len(self.cache) >= self.capacity:
+                # popitem(last=False) rimuove il primo elemento (LRU)
+                self.cache.popitem(last=False)
+            self.cache[key] = value
+
+
+# Esempio d'uso
+cache = LRUCache(2)
+cache.put(1, 1)       # cache: {1=1}
+cache.put(2, 2)       # cache: {1=1, 2=2}
+print(cache.get(1))   # returns 1, cache: {2=2, 1=1}
+cache.put(3, 3)       # evicts key 2, cache: {1=1, 3=3}
+print(cache.get(2))   # returns -1 (not found)</code></pre>
+
+                <h3>Analisi della Complessità</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Operazione</th>
+                            <th>Time Complexity</th>
+                            <th>Spiegazione</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>get(key)</code></td>
+                            <td><strong>O(1)</strong></td>
+                            <td>HashMap lookup O(1) + rimozione/inserimento lista O(1)</td>
+                        </tr>
+                        <tr>
+                            <td><code>put(key, value)</code></td>
+                            <td><strong>O(1)</strong></td>
+                            <td>HashMap insert/update O(1) + operazioni lista O(1)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p><strong>Space Complexity:</strong> O(capacity) - memorizziamo al massimo <code>capacity</code> elementi</p>
+
+                <div class="info-box warning">
+                    <h4>Errori Comuni da Evitare</h4>
+                    <ul>
+                        <li>Dimenticare di rimuovere la chiave dalla HashMap quando si fa eviction</li>
+                        <li>Non gestire correttamente l'update di un valore esistente (deve diventare MRU)</li>
+                        <li>Usare una sola struttura (es. solo LinkedHashMap) senza capire il meccanismo sottostante</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Valid Parentheses Section -->
+            <section class="section" id="modulo7-parentheses">
+                <h2>Valid Parentheses</h2>
+
+                <p>Questo problema classico verifica se una stringa contenente solo parentesi <code>(){}[]</code> è valida, ovvero se ogni parentesi aperta ha una corrispondente chiusa nell'ordine corretto.</p>
+
+                <div class="info-box">
+                    <h4>Esempi</h4>
+                    <ul>
+                        <li><code>"()"</code> → <strong>true</strong></li>
+                        <li><code>"()[]{}"</code> → <strong>true</strong></li>
+                        <li><code>"(]"</code> → <strong>false</strong></li>
+                        <li><code>"([)]"</code> → <strong>false</strong> (ordine sbagliato)</li>
+                        <li><code>"{[]}"</code> → <strong>true</strong> (nested correttamente)</li>
+                    </ul>
+                </div>
+
+                <h3>Approccio: Stack</h3>
+
+                <p>Lo <strong>Stack</strong> è la struttura dati perfetta: le parentesi devono essere chiuse nell'ordine inverso di apertura (LIFO - Last In, First Out).</p>
+
+                <div class="diagram">
+                    <pre>
+Input: "({[]})"
+
+Passo 1: '(' → push      Stack: [(]
+Passo 2: '{' → push      Stack: [(, {]
+Passo 3: '[' → push      Stack: [(, {, []
+Passo 4: ']' → pop '['   Stack: [(, {]     ✓ match
+Passo 5: '}' → pop '{'   Stack: [(]        ✓ match
+Passo 6: ')' → pop '('   Stack: []         ✓ match
+Fine: Stack vuoto → VALID
+
+Input: "([)]"
+
+Passo 1: '(' → push      Stack: [(]
+Passo 2: '[' → push      Stack: [(, []
+Passo 3: ')' → pop '['   Stack: [(]        ✗ ')' ≠ ']' → INVALID
+                    </pre>
+                </div>
+
+                <h3>Soluzione Java</h3>
+
+                <pre><code class="language-java">class Solution {
+    public boolean isValid(String s) {
+        // Stack per tenere traccia delle parentesi aperte
+        Deque&lt;Character&gt; stack = new ArrayDeque&lt;&gt;();
+
+        // Mappa per matching: chiusa → aperta corrispondente
+        Map&lt;Character, Character&gt; pairs = Map.of(
+            ')', '(',
+            '}', '{',
+            ']', '['
+        );
+
+        for (char c : s.toCharArray()) {
+            if (pairs.containsValue(c)) {
+                // È una parentesi aperta: push
+                stack.push(c);
+            } else if (pairs.containsKey(c)) {
+                // È una parentesi chiusa: verifica match
+                if (stack.isEmpty() || stack.pop() != pairs.get(c)) {
+                    return false;
+                }
+            }
+            // Ignora altri caratteri (se presenti)
+        }
+
+        // Valido solo se tutte le parentesi sono state chiuse
+        return stack.isEmpty();
+    }
+}
+
+// Versione compatta senza Map (più veloce in pratica)
+class SolutionOptimized {
+    public boolean isValid(String s) {
+        Deque&lt;Character&gt; stack = new ArrayDeque&lt;&gt;();
+
+        for (char c : s.toCharArray()) {
+            // Quando incontri un'aperta, pusha la chiusa corrispondente
+            if (c == '(') stack.push(')');
+            else if (c == '{') stack.push('}');
+            else if (c == '[') stack.push(']');
+            // Quando incontri una chiusa, verifica che sia quella attesa
+            else if (stack.isEmpty() || stack.pop() != c) {
+                return false;
+            }
+        }
+
+        return stack.isEmpty();
+    }
+}</code></pre>
+
+                <h3>Soluzione Python</h3>
+
+                <pre><code class="language-python">def isValid(s: str) -> bool:
+    stack = []
+    pairs = {')': '(', '}': '{', ']': '['}
+
+    for char in s:
+        if char in pairs.values():  # Parentesi aperta
+            stack.append(char)
+        elif char in pairs:  # Parentesi chiusa
+            if not stack or stack.pop() != pairs[char]:
+                return False
+
+    return len(stack) == 0
+
+
+# Versione one-liner (meno leggibile, ma elegante)
+def isValid_oneliner(s: str) -> bool:
+    while '()' in s or '{}' in s or '[]' in s:
+        s = s.replace('()', '').replace('{}', '').replace('[]', '')
+    return s == ''
+# Nota: questa versione è O(n²) - NON usare in produzione!</code></pre>
+
+                <h3>Analisi della Complessità</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Aspetto</th>
+                            <th>Complessità</th>
+                            <th>Spiegazione</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Time</td>
+                            <td><strong>O(n)</strong></td>
+                            <td>Singolo passaggio sulla stringa, ogni operazione stack è O(1)</td>
+                        </tr>
+                        <tr>
+                            <td>Space</td>
+                            <td><strong>O(n)</strong></td>
+                            <td>Nel caso peggiore (tutte aperte), lo stack contiene n elementi</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="info-box success">
+                    <h4>Varianti del Problema</h4>
+                    <ul>
+                        <li><strong>Minimum Add to Make Valid</strong>: Quante parentesi aggiungere per rendere valida la stringa?</li>
+                        <li><strong>Longest Valid Parentheses</strong>: Sottostringa più lunga di parentesi valide (più difficile, richiede DP)</li>
+                        <li><strong>Remove Invalid Parentheses</strong>: Rimuovi il minimo numero per ottenere tutte le stringhe valide</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Merge Intervals Section -->
+            <section class="section" id="modulo7-intervals">
+                <h2>Merge Intervals</h2>
+
+                <p>Dato un array di intervalli <code>[[start, end], ...]</code>, unisci tutti gli intervalli che si sovrappongono.</p>
+
+                <div class="info-box">
+                    <h4>Esempi</h4>
+                    <ul>
+                        <li><code>[[1,3],[2,6],[8,10],[15,18]]</code> → <code>[[1,6],[8,10],[15,18]]</code></li>
+                        <li><code>[[1,4],[4,5]]</code> → <code>[[1,5]]</code> (i bordi si toccano)</li>
+                        <li><code>[[1,4],[0,4]]</code> → <code>[[0,4]]</code></li>
+                    </ul>
+                </div>
+
+                <h3>Approccio: Sort + Linear Scan</h3>
+
+                <p>La chiave è <strong>ordinare per start time</strong>. Dopo l'ordinamento, gli intervalli sovrapponibili sono adiacenti, e possiamo fare un singolo passaggio per unirli.</p>
+
+                <div class="diagram">
+                    <pre>
+Input: [[1,3], [2,6], [8,10], [15,18]]
+
+1. Già ordinato per start
+
+2. Visualizzazione:
+   1────3
+      2────────6
+                   8────10
+                              15────18
+
+3. Merge Logic:
+   - [1,3] → aggiungi a result: [[1,3]]
+   - [2,6] → 2 ≤ 3 (overlap!) → estendi: [[1,6]]
+   - [8,10] → 8 > 6 (no overlap) → aggiungi: [[1,6], [8,10]]
+   - [15,18] → 15 > 10 (no overlap) → aggiungi: [[1,6], [8,10], [15,18]]
+
+Output: [[1,6], [8,10], [15,18]]
+                    </pre>
+                </div>
+
+                <h3>Soluzione Java</h3>
+
+                <pre><code class="language-java">class Solution {
+    public int[][] merge(int[][] intervals) {
+        if (intervals.length &lt;= 1) {
+            return intervals;
+        }
+
+        // 1. Ordina per start time
+        Arrays.sort(intervals, (a, b) -> Integer.compare(a[0], b[0]));
+
+        // 2. Lista per il risultato (dimensione variabile)
+        List&lt;int[]&gt; result = new ArrayList&lt;&gt;();
+
+        // 3. Inizia con il primo intervallo
+        int[] current = intervals[0];
+        result.add(current);
+
+        // 4. Scorri e unisci
+        for (int[] interval : intervals) {
+            int currentEnd = current[1];
+            int nextStart = interval[0];
+            int nextEnd = interval[1];
+
+            if (nextStart &lt;= currentEnd) {
+                // Overlap: estendi l'intervallo corrente
+                // Nota: prendiamo il max degli end perché un intervallo
+                // potrebbe essere contenuto in un altro
+                current[1] = Math.max(currentEnd, nextEnd);
+            } else {
+                // No overlap: aggiungi nuovo intervallo
+                current = interval;
+                result.add(current);
+            }
+        }
+
+        return result.toArray(new int[result.size()][]);
+    }
+}
+
+// Esempio d'uso
+// Input:  [[1,3],[2,6],[8,10],[15,18]]
+// Output: [[1,6],[8,10],[15,18]]</code></pre>
+
+                <h3>Soluzione Python</h3>
+
+                <pre><code class="language-python">def merge(intervals: list[list[int]]) -> list[list[int]]:
+    if not intervals:
+        return []
+
+    # Ordina per start time
+    intervals.sort(key=lambda x: x[0])
+
+    result = [intervals[0]]
+
+    for start, end in intervals[1:]:
+        # Ultimo intervallo nel risultato
+        last = result[-1]
+
+        if start <= last[1]:
+            # Overlap: estendi
+            last[1] = max(last[1], end)
+        else:
+            # No overlap: aggiungi
+            result.append([start, end])
+
+    return result
+
+
+# Test
+print(merge([[1,3],[2,6],[8,10],[15,18]]))  # [[1,6],[8,10],[15,18]]
+print(merge([[1,4],[4,5]]))                  # [[1,5]]
+print(merge([[1,4],[0,2],[3,5]]))            # [[0,5]] dopo sorting</code></pre>
+
+                <h3>Analisi della Complessità</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Aspetto</th>
+                            <th>Complessità</th>
+                            <th>Spiegazione</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Time</td>
+                            <td><strong>O(n log n)</strong></td>
+                            <td>Dominato dal sorting. Il merge è O(n)</td>
+                        </tr>
+                        <tr>
+                            <td>Space</td>
+                            <td><strong>O(n)</strong></td>
+                            <td>Per il risultato (nel caso peggiore, nessun merge)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="info-box">
+                    <h4>Perché O(n log n) è ottimale?</h4>
+                    <p>Non possiamo fare meglio di O(n log n) perché dobbiamo ordinare gli intervalli. Se gli intervalli fossero già ordinati (o potessimo assumere che lo siano), la complessità sarebbe O(n). Questo è un buon punto da menzionare al colloquio: chiedi sempre se l'input è già ordinato!</p>
+                </div>
+
+                <div class="info-box success">
+                    <h4>Varianti del Problema</h4>
+                    <ul>
+                        <li><strong>Insert Interval</strong>: Inserisci un nuovo intervallo in una lista già ordinata e merged</li>
+                        <li><strong>Meeting Rooms</strong>: Verifica se una persona può partecipare a tutte le riunioni (no overlap)</li>
+                        <li><strong>Meeting Rooms II</strong>: Quante sale servono per tutte le riunioni? (richiede min-heap)</li>
+                        <li><strong>Non-overlapping Intervals</strong>: Minimo numero di intervalli da rimuovere per eliminare overlap</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Quiz Section Modulo 7 -->
+            <section class="quiz-section" id="modulo7-quiz">
+                <h2>Interactive Challenge Quiz - Modulo 7</h2>
+                <p>Verifica la tua comprensione degli algoritmi e delle complessità con queste domande.</p>
+
+                <!-- Question 31 -->
+                <div class="quiz-question" data-correct="b">
+                    <h4><span>Q1.</span> Nella LRU Cache, perché usiamo una Doubly Linked List invece di una Singly Linked List?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q31" id="q31a" value="a">
+                            <label for="q31a">Per supportare l'iterazione bidirezionale sui dati</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q31" id="q31b" value="b">
+                            <label for="q31b">Per rimuovere un nodo in O(1) senza dover attraversare la lista</label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q31" id="q31c" value="c">
+                            <label for="q31c">Per ridurre lo spazio occupato in memoria</label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q31" id="q31d" value="d">
+                            <label for="q31d">Perché Java non supporta Singly Linked List nativamente</label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q31')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q31"></div>
+                </div>
+
+                <!-- Question 32 -->
+                <div class="quiz-question" data-correct="c">
+                    <h4><span>Q2.</span> Quale sarebbe la complessità temporale di una LRU Cache implementata con solo una LinkedHashMap (senza custom logic)?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q32" id="q32a" value="a">
+                            <label for="q32a">get: O(n), put: O(n)</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q32" id="q32b" value="b">
+                            <label for="q32b">get: O(1), put: O(n) per l'eviction</label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q32" id="q32c" value="c">
+                            <label for="q32c">get: O(1), put: O(1) - LinkedHashMap con accessOrder=true lo gestisce</label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q32" id="q32d" value="d">
+                            <label for="q32d">get: O(log n), put: O(log n)</label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q32')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q32"></div>
+                </div>
+
+                <!-- Question 33 -->
+                <div class="quiz-question" data-correct="a">
+                    <h4><span>Q3.</span> Per il problema Valid Parentheses, se la stringa contiene solo '(' e ')', qual è lo space complexity ottimale?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q33" id="q33a" value="a">
+                            <label for="q33a">O(1) - basta un contatore</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q33" id="q33b" value="b">
+                            <label for="q33b">O(n) - serve sempre uno stack</label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q33" id="q33c" value="c">
+                            <label for="q33c">O(log n) - usando una struttura ad albero</label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q33" id="q33d" value="d">
+                            <label for="q33d">O(n²) - bisogna confrontare ogni coppia</label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q33')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q33"></div>
+                </div>
+
+                <!-- Question 34 -->
+                <div class="quiz-question" data-correct="d">
+                    <h4><span>Q4.</span> Nel problema Merge Intervals, se l'input fosse già ordinato per start time, quale sarebbe la complessità totale?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q34" id="q34a" value="a">
+                            <label for="q34a">Sempre O(n log n) - il sorting è comunque necessario per verificare l'ordine</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q34" id="q34b" value="b">
+                            <label for="q34b">O(n²) - bisogna confrontare ogni intervallo con tutti gli altri</label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q34" id="q34c" value="c">
+                            <label for="q34c">O(1) - con input ordinato il problema diventa banale</label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q34" id="q34d" value="d">
+                            <label for="q34d">O(n) - singolo passaggio lineare per il merge</label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q34')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q34"></div>
+                </div>
+
+                <!-- Question 35 -->
+                <div class="quiz-question" data-correct="b">
+                    <h4><span>Q5.</span> Stai implementando una LRU Cache per un sistema ad alta concorrenza. Quale problema principale devi risolvere?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q35" id="q35a" value="a">
+                            <label for="q35a">La HashMap non è thread-safe, basta usare ConcurrentHashMap</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q35" id="q35b" value="b">
+                            <label for="q35b">get() e put() devono essere atomiche: sia HashMap che lista devono essere aggiornate insieme</label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q35" id="q35c" value="c">
+                            <label for="q35c">La Doubly Linked List non può essere condivisa tra thread</label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q35" id="q35d" value="d">
+                            <label for="q35d">Non c'è problema: le strutture dati in Java sono sempre thread-safe</label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q35')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q35"></div>
+                </div>
+            </section>
+
+            <!-- Questions Section Modulo 7 -->
+            <section class="section" id="modulo7-questions">
+                <h2>Domande da Colloquio - Modulo 7</h2>
+
+                <div class="info-box">
+                    <h4>Q: Spiega come implementeresti una LRU Cache. Quali strutture dati useresti e perché?</h4>
+                    <p><strong>Risposta attesa:</strong> Userei una combinazione di HashMap e Doubly Linked List. La HashMap fornisce O(1) lookup per chiave, mappando la chiave al nodo corrispondente nella lista. La Doubly Linked List mantiene l'ordine di utilizzo: il nodo più recente (MRU) è in testa, il meno recente (LRU) è in coda. Con i puntatori prev/next, posso rimuovere un nodo in O(1) senza attraversare la lista. Quando accedo a un elemento, lo sposto in testa. Quando la cache è piena, rimuovo l'elemento in coda. Entrambe le operazioni sono O(1).</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>Q: Nel problema Valid Parentheses, come gestiresti il caso con parentesi annidate come <code>"{[()]}"</code>?</h4>
+                    <p><strong>Risposta attesa:</strong> Lo stack gestisce naturalmente l'annidamento. Quando incontro una parentesi aperta, la pusha. Quando incontro una chiusa, verifico che lo stack non sia vuoto e che il top sia la corrispondente aperta. Per <code>"{[()]}"</code>: push '{', push '[', push '(', pop e verifica '(' con ')', pop e verifica '[' con ']', pop e verifica '{' con '}'. Lo stack è vuoto alla fine → valido. L'ordine LIFO dello stack garantisce che le parentesi più interne siano chiuse prima di quelle esterne.</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>Q: Perché nel Merge Intervals ordiniamo per start time e non per end time?</h4>
+                    <p><strong>Risposta attesa:</strong> Ordinando per start time, garantiamo che quando processiamo un intervallo, tutti quelli che potrebbero sovrapporsi con esso (con start minore) sono già stati processati. L'overlap si verifica quando il prossimo start è ≤ dell'end corrente. Se ordinassimo per end time, non avremmo questa proprietà: un intervallo con end piccolo potrebbe avere start grande, rendendo impossibile determinare l'overlap con un singolo passaggio. Con start time ordering, possiamo fare merge in O(n) dopo il sorting.</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>Q: Come renderesti thread-safe una LRU Cache?</h4>
+                    <p><strong>Risposta attesa:</strong> Il problema principale è che get() e put() modificano sia la HashMap che la lista, e queste operazioni devono essere atomiche. Opzioni: 1) Lock globale (synchronized o ReentrantLock): semplice ma crea contention. 2) Read-write lock: permette letture concorrenti, ma get() in LRU modifica la lista (sposta a MRU), quindi è comunque una write. 3) Striped locking: dividi la cache in segmenti con lock indipendenti (come ConcurrentHashMap), ma complica la gestione LRU globale. 4) In Java, considera Collections.synchronizedMap(new LinkedHashMap) o Caffeine (libreria ottimizzata per caching concorrente).</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>Q: Qual è la differenza tra O(n) e O(n log n)? Quando diventa significativa?</h4>
+                    <p><strong>Risposta attesa:</strong> O(n) è lineare: raddoppiando l'input, raddoppia il tempo. O(n log n) cresce leggermente più velocemente: log₂(1M) ≈ 20, quindi per 1M elementi è circa 20M operazioni vs 1M. La differenza diventa significativa con grandi dataset: per n=1 miliardo, O(n) = 1B operazioni, O(n log n) ≈ 30B operazioni (30x più lento). Tuttavia, per n piccoli (< 1000), le costanti nascoste nella notazione O possono dominare, e un algoritmo O(n log n) ben ottimizzato può battere un O(n) con costanti alte. Sempre profilare con dati reali.</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>Q: Se dovessi scegliere tra un algoritmo O(n²) con space O(1) e uno O(n log n) con space O(n), cosa considereresti?</h4>
+                    <p><strong>Risposta attesa:</strong> Dipende dal contesto. Fattori: 1) Dimensione dell'input: per n piccolo (< 100), O(n²) può essere più veloce per costanti minori. 2) Memoria disponibile: in sistemi embedded o con dati enormi, O(1) space può essere obbligatorio. 3) Cache locality: O(n²) in-place può avere migliore cache performance. 4) Parallelizzabilità: merge sort (O(n log n)) parallelizza bene. 5) Stabilità: se serve sorting stabile, influenza la scelta. In generale, per n > 1000 con memoria disponibile, O(n log n) è preferibile. Sempre chiedere i constraint specifici al colloquio.</p>
+                </div>
+            </section>
+
+            <!-- ==================== MODULO 8: PARADIGMI DI PROGRAMMAZIONE ==================== -->
+
+            <header class="module-header" id="modulo8">
+                <span class="module-tag">Modulo 8</span>
+                <h1>Paradigmi di Programmazione</h1>
+                <p>Programmazione Funzionale, confronto con OOP e casi d'uso pratici in Java</p>
+            </header>
+
+            <!-- Functional Programming Section -->
+            <section class="section" id="modulo8-functional">
+                <h2>Programmazione Funzionale: Principi Fondamentali</h2>
+
+                <p>La <strong>Programmazione Funzionale</strong> (FP) è un paradigma che tratta il calcolo come valutazione di funzioni matematiche, evitando stati mutabili e side effects. Mentre la OOP modella il mondo come oggetti con stato e comportamento, la FP modella il mondo come trasformazioni di dati.</p>
+
+                <div class="info-box">
+                    <h4>Perché la Programmazione Funzionale nel 2026?</h4>
+                    <p>Con l'aumento della concorrenza (multi-core, distributed systems), la FP offre vantaggi significativi: codice senza side effects è naturalmente thread-safe, più facile da testare e da ragionare. Java ha abbracciato molti concetti FP da Java 8 in poi (Streams, Lambdas, Optional).</p>
+                </div>
+
+                <h3>I Pilastri della Programmazione Funzionale</h3>
+
+                <h4>1. Pure Functions</h4>
+
+                <p>Una <strong>pure function</strong> ha due caratteristiche:</p>
+                <ul>
+                    <li><strong>Deterministica</strong>: dato lo stesso input, produce sempre lo stesso output</li>
+                    <li><strong>No side effects</strong>: non modifica stato esterno, non fa I/O, non muta gli argomenti</li>
+                </ul>
+
+                <pre><code class="language-java">// ❌ IMPURA: dipende da stato esterno
+private double taxRate = 0.22;
+
+public double calculateTax(double amount) {
+    return amount * taxRate;  // Dipende da taxRate che può cambiare
+}
+
+// ❌ IMPURA: side effect (modifica stato esterno)
+private List&lt;String&gt; logs = new ArrayList&lt;&gt;();
+
+public int process(int x) {
+    logs.add("Processing: " + x);  // Side effect!
+    return x * 2;
+}
+
+// ✅ PURA: stesso input → stesso output, nessun side effect
+public double calculateTax(double amount, double taxRate) {
+    return amount * taxRate;
+}
+
+// ✅ PURA: trasforma input in output senza mutare nulla
+public List&lt;Integer&gt; doubleAll(List&lt;Integer&gt; numbers) {
+    return numbers.stream()
+        .map(n -> n * 2)
+        .toList();  // Ritorna NUOVA lista, non muta l'originale
+}</code></pre>
+
+                <h4>2. Immutability</h4>
+
+                <p>In FP, i dati non vengono mai modificati dopo la creazione. Invece di mutare, si creano nuove versioni con le modifiche desiderate.</p>
+
+                <pre><code class="language-java">// ❌ MUTABILE: l'oggetto può essere modificato
+public class MutablePerson {
+    private String name;
+    private int age;
+
+    public void setName(String name) { this.name = name; }
+    public void setAge(int age) { this.age = age; }
+}
+
+// ✅ IMMUTABILE: una volta creato, non può cambiare
+public record Person(String name, int age) {
+    // I record Java sono immutabili per design
+
+    // Per "modificare", crea una nuova istanza
+    public Person withAge(int newAge) {
+        return new Person(this.name, newAge);
+    }
+}
+
+// Uso
+Person alice = new Person("Alice", 30);
+Person olderAlice = alice.withAge(31);  // alice resta invariata!
+
+System.out.println(alice.age());       // 30
+System.out.println(olderAlice.age());  // 31</code></pre>
+
+                <div class="info-box success">
+                    <h4>Vantaggi dell'Immutabilità</h4>
+                    <ul>
+                        <li><strong>Thread-safety gratis</strong>: oggetti immutabili possono essere condivisi tra thread senza sincronizzazione</li>
+                        <li><strong>Nessun defensive copying</strong>: puoi passare riferimenti senza paura che vengano modificati</li>
+                        <li><strong>Facile da testare</strong>: nessuno stato nascosto che cambia tra le chiamate</li>
+                        <li><strong>Caching sicuro</strong>: puoi usare oggetti immutabili come chiavi di HashMap</li>
+                    </ul>
+                </div>
+
+                <h4>3. First-Class Functions</h4>
+
+                <p>Le funzioni sono "cittadini di prima classe": possono essere assegnate a variabili, passate come argomenti e ritornate da altre funzioni.</p>
+
+                <pre><code class="language-java">// Funzione assegnata a una variabile
+Function&lt;Integer, Integer&gt; double_ = x -> x * 2;
+Function&lt;Integer, Integer&gt; square = x -> x * x;
+
+// Funzione passata come argomento
+public List&lt;Integer&gt; transform(List&lt;Integer&gt; list, Function&lt;Integer, Integer&gt; fn) {
+    return list.stream().map(fn).toList();
+}
+
+List&lt;Integer&gt; numbers = List.of(1, 2, 3, 4);
+transform(numbers, double_);  // [2, 4, 6, 8]
+transform(numbers, square);   // [1, 4, 9, 16]
+
+// Funzione che ritorna una funzione (Higher-Order Function)
+public Function&lt;Integer, Integer&gt; multiplier(int factor) {
+    return x -> x * factor;  // Closure: "cattura" factor
+}
+
+Function&lt;Integer, Integer&gt; triple = multiplier(3);
+triple.apply(5);  // 15</code></pre>
+
+                <h4>4. Higher-Order Functions</h4>
+
+                <p>Le <strong>higher-order functions</strong> sono funzioni che prendono altre funzioni come argomenti o le ritornano. Le tre più importanti sono <code>map</code>, <code>filter</code> e <code>reduce</code>.</p>
+
+                <div class="diagram">
+                    <pre>
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    HIGHER-ORDER FUNCTIONS                                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  MAP: Trasforma ogni elemento                                                │
+│  ─────────────────────────────                                               │
+│  [1, 2, 3, 4]  ──map(x → x²)──▶  [1, 4, 9, 16]                             │
+│                                                                              │
+│  FILTER: Seleziona elementi che soddisfano un predicato                     │
+│  ─────────────────────────────────────────────────────                       │
+│  [1, 2, 3, 4]  ──filter(x → x%2==0)──▶  [2, 4]                              │
+│                                                                              │
+│  REDUCE: Combina tutti gli elementi in un singolo valore                    │
+│  ─────────────────────────────────────────────────────                       │
+│  [1, 2, 3, 4]  ──reduce(0, (acc,x) → acc+x)──▶  10                          │
+│                                                                              │
+│  COMPOSIZIONE (Pipeline):                                                    │
+│  ─────────────────────────                                                   │
+│  [1, 2, 3, 4, 5, 6]                                                         │
+│       │                                                                      │
+│       ▼  filter(x → x%2==0)                                                 │
+│  [2, 4, 6]                                                                   │
+│       │                                                                      │
+│       ▼  map(x → x²)                                                        │
+│  [4, 16, 36]                                                                 │
+│       │                                                                      │
+│       ▼  reduce(0, +)                                                       │
+│  56                                                                          │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+                    </pre>
+                </div>
+
+                <pre><code class="language-java">List&lt;Integer&gt; numbers = List.of(1, 2, 3, 4, 5, 6);
+
+// Pipeline funzionale
+int result = numbers.stream()
+    .filter(n -> n % 2 == 0)      // [2, 4, 6]
+    .map(n -> n * n)               // [4, 16, 36]
+    .reduce(0, Integer::sum);      // 56
+
+// Equivalente imperativo (meno leggibile, più error-prone)
+int sumImperative = 0;
+for (int n : numbers) {
+    if (n % 2 == 0) {
+        sumImperative += n * n;
+    }
+}</code></pre>
+            </section>
+
+            <!-- Java Streams Section -->
+            <section class="section" id="modulo8-streams">
+                <h2>Java Streams API</h2>
+
+                <p>La <strong>Streams API</strong> (introdotta in Java 8) porta la programmazione funzionale in Java, permettendo di processare collezioni in modo dichiarativo e potenzialmente parallelo.</p>
+
+                <div class="info-box warning">
+                    <h4>Stream ≠ Collection</h4>
+                    <p>Uno Stream non è una struttura dati: è una <em>pipeline di operazioni</em> su dati. Non memorizza elementi, li processa on-demand (lazy evaluation). Uno Stream può essere consumato una sola volta.</p>
+                </div>
+
+                <h3>Operazioni Intermedie vs Terminali</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tipo</th>
+                            <th>Comportamento</th>
+                            <th>Esempi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Intermediate</strong></td>
+                            <td>Lazy, ritornano Stream, concatenabili</td>
+                            <td><code>filter</code>, <code>map</code>, <code>flatMap</code>, <code>sorted</code>, <code>distinct</code>, <code>limit</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Terminal</strong></td>
+                            <td>Eager, "consumano" lo stream, producono risultato</td>
+                            <td><code>collect</code>, <code>forEach</code>, <code>reduce</code>, <code>count</code>, <code>findFirst</code>, <code>anyMatch</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <pre><code class="language-java">// Le operazioni intermedie sono LAZY: non eseguono nulla finché
+// non c'è un'operazione terminale
+
+List&lt;String&gt; names = List.of("Alice", "Bob", "Charlie", "David");
+
+Stream&lt;String&gt; stream = names.stream()
+    .filter(name -> {
+        System.out.println("Filtering: " + name);
+        return name.length() > 3;
+    })
+    .map(String::toUpperCase);
+
+// Nulla è stato stampato! Lo stream è lazy.
+
+// Ora aggiungiamo un'operazione terminale
+List&lt;String&gt; result = stream.toList();
+// Output:
+// Filtering: Alice
+// Filtering: Bob
+// Filtering: Charlie
+// Filtering: David
+// result = ["ALICE", "CHARLIE", "DAVID"]</code></pre>
+
+                <h3>Operazioni Comuni con Esempi</h3>
+
+                <pre><code class="language-java">record Order(String customer, List&lt;Item&gt; items, double total, Status status) {}
+record Item(String name, double price, int quantity) {}
+enum Status { PENDING, SHIPPED, DELIVERED, CANCELLED }
+
+List&lt;Order&gt; orders = getOrders();
+
+// 1. FILTER + MAP + COLLECT: Nomi dei clienti con ordini > €100
+List&lt;String&gt; bigSpenders = orders.stream()
+    .filter(o -> o.total() > 100)
+    .map(Order::customer)
+    .distinct()
+    .sorted()
+    .toList();
+
+// 2. FLATMAP: Tutti gli item di tutti gli ordini (appiattisce liste nested)
+List&lt;Item&gt; allItems = orders.stream()
+    .flatMap(o -> o.items().stream())
+    .toList();
+
+// 3. GROUPING: Ordini raggruppati per status
+Map&lt;Status, List&lt;Order&gt;&gt; byStatus = orders.stream()
+    .collect(Collectors.groupingBy(Order::status));
+
+// 4. REDUCE: Totale di tutti gli ordini
+double grandTotal = orders.stream()
+    .mapToDouble(Order::total)
+    .sum();  // Specializzazione per primitive (più efficiente)
+
+// 5. PARTITIONING: Divide in due gruppi (true/false)
+Map&lt;Boolean, List&lt;Order&gt;&gt; shipped = orders.stream()
+    .collect(Collectors.partitioningBy(
+        o -> o.status() == Status.SHIPPED || o.status() == Status.DELIVERED
+    ));
+
+// 6. STATISTICS: Statistiche in un colpo solo
+DoubleSummaryStatistics stats = orders.stream()
+    .mapToDouble(Order::total)
+    .summaryStatistics();
+// stats.getAverage(), stats.getMax(), stats.getMin(), stats.getSum(), stats.getCount()
+
+// 7. COLLECTORS AVANZATI: Media dei totali per status
+Map&lt;Status, Double&gt; avgByStatus = orders.stream()
+    .collect(Collectors.groupingBy(
+        Order::status,
+        Collectors.averagingDouble(Order::total)
+    ));
+
+// 8. OPTIONAL: Trova il primo ordine non spedito (se esiste)
+Optional&lt;Order&gt; firstPending = orders.stream()
+    .filter(o -> o.status() == Status.PENDING)
+    .findFirst();</code></pre>
+
+                <h3>Optional: Gestione Null-Safety</h3>
+
+                <p><strong>Optional</strong> è un container che può contenere o meno un valore. È il modo funzionale di gestire l'assenza di valore, evitando NullPointerException.</p>
+
+                <pre><code class="language-java">// ❌ Approccio imperativo: null checks ovunque
+public String getCustomerCity(Order order) {
+    if (order != null) {
+        Customer customer = order.getCustomer();
+        if (customer != null) {
+            Address address = customer.getAddress();
+            if (address != null) {
+                return address.getCity();
+            }
+        }
+    }
+    return "Unknown";
+}
+
+// ✅ Approccio funzionale con Optional
+public String getCustomerCity(Order order) {
+    return Optional.ofNullable(order)
+        .map(Order::getCustomer)
+        .map(Customer::getAddress)
+        .map(Address::getCity)
+        .orElse("Unknown");
+}
+
+// Operazioni comuni su Optional
+Optional&lt;String&gt; name = Optional.of("Alice");
+Optional&lt;String&gt; empty = Optional.empty();
+
+// map: trasforma il valore se presente
+Optional&lt;Integer&gt; length = name.map(String::length);  // Optional[5]
+
+// filter: mantiene il valore solo se soddisfa il predicato
+Optional&lt;String&gt; longName = name.filter(n -> n.length() > 3);  // Optional[Alice]
+
+// orElse: valore di default se vuoto
+String result = empty.orElse("Default");  // "Default"
+
+// orElseGet: lazy evaluation del default (utile se costoso da calcolare)
+String result2 = empty.orElseGet(() -> computeExpensiveDefault());
+
+// orElseThrow: lancia eccezione se vuoto
+String result3 = empty.orElseThrow(() -> new NotFoundException("Not found"));
+
+// ifPresent: esegue azione solo se presente
+name.ifPresent(n -> System.out.println("Hello, " + n));
+
+// ifPresentOrElse (Java 9+): if-else funzionale
+name.ifPresentOrElse(
+    n -> System.out.println("Found: " + n),
+    () -> System.out.println("Not found")
+);</code></pre>
+
+                <div class="info-box warning">
+                    <h4>Anti-pattern con Optional</h4>
+                    <ul>
+                        <li><strong>Optional.get() senza controllo</strong>: usa sempre orElse/orElseThrow</li>
+                        <li><strong>Optional come campo di classe</strong>: Optional non è Serializable, usa solo per return type</li>
+                        <li><strong>Optional&lt;Collection&gt;</strong>: ritorna collezione vuota invece, non Optional di collezione</li>
+                        <li><strong>isPresent() + get()</strong>: usa map/flatMap/orElse invece</li>
+                    </ul>
+                </div>
+
+                <h3>Parallel Streams</h3>
+
+                <p>Gli Stream possono essere eseguiti in parallelo per sfruttare CPU multi-core. Ma attenzione: non sempre conviene!</p>
+
+                <pre><code class="language-java">// Sequenziale
+long count = numbers.stream()
+    .filter(n -> isPrime(n))
+    .count();
+
+// Parallelo: divide il lavoro tra i core disponibili
+long countParallel = numbers.parallelStream()
+    .filter(n -> isPrime(n))
+    .count();
+
+// Oppure converti uno stream esistente
+long countParallel2 = numbers.stream()
+    .parallel()
+    .filter(n -> isPrime(n))
+    .count();</code></pre>
+
+                <div class="info-box">
+                    <h4>Quando usare Parallel Streams?</h4>
+                    <p>Usa parallel streams solo quando:</p>
+                    <ul>
+                        <li><strong>Dataset grande</strong>: l'overhead di parallelizzazione vale solo con molti elementi (>10.000)</li>
+                        <li><strong>Operazioni CPU-intensive</strong>: filtri/map complessi, non semplici operazioni aritmetiche</li>
+                        <li><strong>Nessun side effect</strong>: le operazioni devono essere stateless e thread-safe</li>
+                        <li><strong>Fonte splittabile</strong>: ArrayList sì, LinkedList no (non può dividere efficientemente)</li>
+                    </ul>
+                    <p><strong>NON usare</strong> per operazioni I/O-bound (network, disk) o con collezioni piccole.</p>
+                </div>
+            </section>
+
+            <!-- OOP vs FP Comparison Section -->
+            <section class="section" id="modulo8-comparison">
+                <h2>OOP vs Programmazione Funzionale</h2>
+
+                <p>OOP e FP non sono mutualmente esclusivi: Java moderno li combina efficacemente. La chiave è scegliere l'approccio giusto per ogni situazione.</p>
+
+                <h3>Confronto Filosofico</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Aspetto</th>
+                            <th>OOP</th>
+                            <th>Functional</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Unità base</strong></td>
+                            <td>Oggetti (stato + comportamento)</td>
+                            <td>Funzioni (trasformazioni)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Stato</strong></td>
+                            <td>Mutabile, incapsulato negli oggetti</td>
+                            <td>Immutabile, passato esplicitamente</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Flusso</strong></td>
+                            <td>Oggetti che si inviano messaggi</td>
+                            <td>Dati che fluiscono attraverso funzioni</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Riuso</strong></td>
+                            <td>Ereditarietà, composizione di oggetti</td>
+                            <td>Composizione di funzioni</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Side effects</strong></td>
+                            <td>Permessi e comuni</td>
+                            <td>Evitati o isolati</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Concorrenza</strong></td>
+                            <td>Richiede sincronizzazione esplicita</td>
+                            <td>Naturalmente thread-safe (immutabilità)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Quando Usare Cosa</h3>
+
+                <div class="diagram">
+                    <pre>
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    SCEGLIERE IL PARADIGMA GIUSTO                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  USA OOP QUANDO:                        USA FP QUANDO:                       │
+│  ────────────────                       ─────────────────                    │
+│  • Modelli entità del dominio           • Trasformi/processi dati           │
+│    (User, Order, Product)               • Pipeline di elaborazione          │
+│                                                                              │
+│  • Hai stato che cambia nel tempo       • I dati sono immutabili            │
+│    (carrello, sessione)                   (eventi, log, transazioni)        │
+│                                                                              │
+│  • Polimorfismo è centrale              • Composizione di operazioni        │
+│    (Strategy, Template Method)            (map/filter/reduce)               │
+│                                                                              │
+│  • Framework richiede classi            • Alta concorrenza                  │
+│    (Spring beans, JPA entities)           (parallel streams, reactive)      │
+│                                                                              │
+│  COMBINA ENTRAMBI (approccio Java moderno):                                 │
+│  ──────────────────────────────────────────                                  │
+│  • Domain objects (OOP) + service logic (FP)                                │
+│  • Entities mutabili internamente, immutabili all'esterno (DTOs/Records)    │
+│  • Streams per collezioni, Optional per null-safety                         │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+                    </pre>
+                </div>
+
+                <h3>Esempio Pratico: Stesso Problema, Due Approcci</h3>
+
+                <pre><code class="language-java">// PROBLEMA: Calcola il totale degli ordini shipped per cliente
+
+// ═══════════════════════════════════════════════════════════
+// APPROCCIO OOP TRADIZIONALE
+// ═══════════════════════════════════════════════════════════
+
+public class OrderProcessor {
+    private Map&lt;String, Double&gt; customerTotals = new HashMap&lt;&gt;();
+
+    public void processOrders(List&lt;Order&gt; orders) {
+        for (Order order : orders) {
+            if (order.getStatus() == Status.SHIPPED) {
+                String customer = order.getCustomer();
+                double currentTotal = customerTotals.getOrDefault(customer, 0.0);
+                customerTotals.put(customer, currentTotal + order.getTotal());
+            }
+        }
+    }
+
+    public Map&lt;String, Double&gt; getResults() {
+        return new HashMap&lt;&gt;(customerTotals);  // Defensive copy
+    }
+}
+
+// Uso
+OrderProcessor processor = new OrderProcessor();
+processor.processOrders(orders);
+Map&lt;String, Double&gt; totals = processor.getResults();
+
+// ═══════════════════════════════════════════════════════════
+// APPROCCIO FUNZIONALE
+// ═══════════════════════════════════════════════════════════
+
+Map&lt;String, Double&gt; totals = orders.stream()
+    .filter(o -> o.status() == Status.SHIPPED)
+    .collect(Collectors.groupingBy(
+        Order::customer,
+        Collectors.summingDouble(Order::total)
+    ));
+
+// Vantaggi FP qui:
+// - Una espressione, nessuno stato mutabile
+// - Facilmente parallelizzabile: .parallelStream()
+// - Più conciso e dichiarativo
+// - Nessun bug da stato condiviso</code></pre>
+
+                <h3>Composizione di Funzioni</h3>
+
+                <p>In FP, le funzioni complesse si costruiscono componendo funzioni semplici. Java supporta questo con <code>Function.andThen()</code> e <code>Function.compose()</code>.</p>
+
+                <pre><code class="language-java">// Funzioni base
+Function&lt;String, String&gt; trim = String::trim;
+Function&lt;String, String&gt; lowercase = String::toLowerCase;
+Function&lt;String, String&gt; removeSpaces = s -> s.replace(" ", "_");
+
+// Composizione: crea una pipeline di trasformazioni
+Function&lt;String, String&gt; normalize = trim
+    .andThen(lowercase)
+    .andThen(removeSpaces);
+
+normalize.apply("  Hello World  ");  // "hello_world"
+
+// Predicati composti
+Predicate&lt;Order&gt; isShipped = o -> o.status() == Status.SHIPPED;
+Predicate&lt;Order&gt; isHighValue = o -> o.total() > 100;
+
+// Combina predicati
+Predicate&lt;Order&gt; isImportant = isShipped.and(isHighValue);
+Predicate&lt;Order&gt; needsAttention = isShipped.negate().or(isHighValue);
+
+orders.stream()
+    .filter(isImportant)
+    .forEach(System.out::println);</code></pre>
+
+                <h3>Pattern Funzionali Comuni</h3>
+
+                <pre><code class="language-java">// 1. CURRYING: funzione che ritorna funzione
+// Utile per partial application
+Function&lt;Double, Function&lt;Double, Double&gt;&gt; multiply =
+    a -> b -> a * b;
+
+Function&lt;Double, Double&gt; double_ = multiply.apply(2.0);
+Function&lt;Double, Double&gt; triple = multiply.apply(3.0);
+
+double_.apply(5.0);  // 10.0
+triple.apply(5.0);   // 15.0
+
+// 2. MEMOIZATION: cache dei risultati (per funzioni pure)
+public class Memoizer&lt;T, R&gt; {
+    private final Map&lt;T, R&gt; cache = new ConcurrentHashMap&lt;&gt;();
+
+    public Function&lt;T, R&gt; memoize(Function&lt;T, R&gt; fn) {
+        return input -> cache.computeIfAbsent(input, fn);
+    }
+}
+
+// Uso: Fibonacci memoizzato
+Function&lt;Integer, Long&gt; fib = new Memoizer&lt;Integer, Long&gt;()
+    .memoize(n -> n &lt;= 1 ? n : fib.apply(n-1) + fib.apply(n-2));
+
+// 3. EITHER: gestione errori funzionale (simula con sealed classes)
+sealed interface Either&lt;L, R&gt; permits Left, Right {}
+record Left&lt;L, R&gt;(L value) implements Either&lt;L, R&gt; {}
+record Right&lt;L, R&gt;(R value) implements Either&lt;L, R&gt; {}
+
+public Either&lt;String, User&gt; findUser(String id) {
+    User user = repository.find(id);
+    return user != null
+        ? new Right&lt;&gt;(user)
+        : new Left&lt;&gt;("User not found: " + id);
+}
+
+// Pattern matching (Java 21+)
+String result = switch (findUser("123")) {
+    case Right(User user) -> "Found: " + user.name();
+    case Left(String error) -> "Error: " + error;
+};</code></pre>
+            </section>
+
+            <!-- Quiz Section Modulo 8 -->
+            <section class="quiz-section" id="modulo8-quiz">
+                <h2>Interactive Challenge Quiz - Modulo 8</h2>
+                <p>Verifica la tua comprensione della programmazione funzionale.</p>
+
+                <!-- Question 36 -->
+                <div class="quiz-question" data-correct="c">
+                    <h4><span>Q1.</span> Quale delle seguenti funzioni è PURA?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q36" id="q36a" value="a">
+                            <label for="q36a"><code>int count() { return counter++; }</code></label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q36" id="q36b" value="b">
+                            <label for="q36b"><code>double random() { return Math.random(); }</code></label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q36" id="q36c" value="c">
+                            <label for="q36c"><code>int add(int a, int b) { return a + b; }</code></label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q36" id="q36d" value="d">
+                            <label for="q36d"><code>void log(String msg) { System.out.println(msg); }</code></label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q36')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q36"></div>
+                </div>
+
+                <!-- Question 37 -->
+                <div class="quiz-question" data-correct="b">
+                    <h4><span>Q2.</span> Hai uno stream di 1 milione di elementi. Quale operazione NON beneficia di <code>parallelStream()</code>?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q37" id="q37a" value="a">
+                            <label for="q37a"><code>filter(isPrime)</code> dove isPrime è CPU-intensive</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q37" id="q37b" value="b">
+                            <label for="q37b"><code>forEach(item -> httpClient.post(item))</code></label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q37" id="q37c" value="c">
+                            <label for="q37c"><code>map(x -> complexCalculation(x))</code></label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q37" id="q37d" value="d">
+                            <label for="q37d"><code>reduce(0, (a,b) -> a + b)</code></label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q37')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q37"></div>
+                </div>
+
+                <!-- Question 38 -->
+                <div class="quiz-question" data-correct="d">
+                    <h4><span>Q3.</span> Quale codice produce un bug silenzioso con Optional?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q38" id="q38a" value="a">
+                            <label for="q38a"><code>optional.orElse("default")</code></label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q38" id="q38b" value="b">
+                            <label for="q38b"><code>optional.map(String::toUpperCase)</code></label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q38" id="q38c" value="c">
+                            <label for="q38c"><code>optional.orElseThrow()</code></label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q38" id="q38d" value="d">
+                            <label for="q38d"><code>optional.orElse(expensiveComputation())</code></label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q38')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q38"></div>
+                </div>
+
+                <!-- Question 39 -->
+                <div class="quiz-question" data-correct="a">
+                    <h4><span>Q4.</span> Perché le operazioni intermedie degli Stream sono "lazy"?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q39" id="q39a" value="a">
+                            <label for="q39a">Per ottimizzare: eseguono solo quando serve e possono fondere operazioni</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q39" id="q39b" value="b">
+                            <label for="q39b">Per motivi di thread-safety: evitano race conditions</label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q39" id="q39c" value="c">
+                            <label for="q39c">Per compatibilità con versioni precedenti di Java</label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q39" id="q39d" value="d">
+                            <label for="q39d">Perché Java non può eseguire operazioni senza un return type</label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q39')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q39"></div>
+                </div>
+
+                <!-- Question 40 -->
+                <div class="quiz-question" data-correct="c">
+                    <h4><span>Q5.</span> Qual è il principale vantaggio dell'immutabilità in ambienti multi-thread?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q40" id="q40a" value="a">
+                            <label for="q40a">Riduce l'utilizzo di memoria grazie alla condivisione</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q40" id="q40b" value="b">
+                            <label for="q40b">Permette al garbage collector di lavorare più efficientemente</label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q40" id="q40c" value="c">
+                            <label for="q40c">Elimina la necessità di sincronizzazione: nessuna race condition possibile</label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q40" id="q40d" value="d">
+                            <label for="q40d">Rende il codice più veloce grazie alle ottimizzazioni del compilatore</label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q40')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q40"></div>
+                </div>
+            </section>
+
+            <!-- Questions Section Modulo 8 -->
+            <section class="section" id="modulo8-questions">
+                <h2>Domande da Colloquio - Modulo 8</h2>
+
+                <div class="info-box">
+                    <h4>Q: Cos'è una pure function e perché è importante?</h4>
+                    <p><strong>Risposta attesa:</strong> Una pure function ha due proprietà: 1) È deterministica - dato lo stesso input, ritorna sempre lo stesso output. 2) Non ha side effects - non modifica stato esterno, non fa I/O, non muta gli argomenti. Sono importanti perché: sono facili da testare (nessun setup/mock necessario), thread-safe per natura (niente stato condiviso da sincronizzare), facili da ragionare (il comportamento dipende solo dagli argomenti), componibili (puoi combinarle liberamente), memoizzabili (puoi cachare i risultati).</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>Q: Spiega la differenza tra <code>map</code> e <code>flatMap</code> negli Stream Java.</h4>
+                    <p><strong>Risposta attesa:</strong> <code>map</code> trasforma ogni elemento in un altro elemento (1:1). <code>flatMap</code> trasforma ogni elemento in uno Stream e poi "appiattisce" tutti gli Stream risultanti in uno solo. Esempio: se hai <code>List&lt;Order&gt;</code> e ogni Order ha <code>List&lt;Item&gt;</code>, <code>map(Order::getItems)</code> dà <code>Stream&lt;List&lt;Item&gt;&gt;</code> (stream di liste), mentre <code>flatMap(o -> o.getItems().stream())</code> dà <code>Stream&lt;Item&gt;</code> (stream di item, appiattito). flatMap è essenziale per gestire strutture nested.</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>Q: Quando useresti <code>orElse</code> vs <code>orElseGet</code> con Optional?</h4>
+                    <p><strong>Risposta attesa:</strong> <code>orElse(value)</code> valuta sempre l'argomento, anche se Optional contiene un valore. <code>orElseGet(supplier)</code> è lazy: chiama il supplier solo se Optional è vuoto. Usa <code>orElseGet</code> quando il valore di default è costoso da calcolare (query DB, chiamata API, calcolo pesante). Esempio: <code>optional.orElse(repository.findDefault())</code> esegue SEMPRE la query, mentre <code>optional.orElseGet(() -> repository.findDefault())</code> la esegue solo se necessario.</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>Q: Come gestisci gli errori in modo funzionale in Java?</h4>
+                    <p><strong>Risposta attesa:</strong> Diversi approcci: 1) <code>Optional</code> per rappresentare assenza di valore (ma non porta info sull'errore). 2) Creare un tipo <code>Either&lt;Error, Success&gt;</code> o <code>Result</code> con sealed classes (Java 17+) per rappresentare successo O fallimento con dettagli. 3) <code>CompletableFuture</code> per operazioni async con <code>exceptionally()</code> o <code>handle()</code>. 4) Librerie come Vavr che forniscono <code>Try</code> e <code>Either</code>. L'idea è evitare eccezioni checked per control flow e rendere gli errori parte esplicita del tipo di ritorno.</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>Q: Quali sono i rischi di usare parallel streams?</h4>
+                    <p><strong>Risposta attesa:</strong> 1) Overhead: per dataset piccoli o operazioni semplici, il costo di parallelizzazione supera i benefici. 2) ForkJoinPool condiviso: tutti i parallel streams usano lo stesso pool, operazioni bloccanti (I/O) possono starved altri stream. 3) Ordine: operazioni come <code>forEachOrdered</code> annullano i benefici. 4) Thread-safety: le operazioni devono essere stateless, side-effects causano race conditions. 5) Fonte non splittabile: LinkedList si divide male, ArrayList bene. Rule of thumb: usa parallel solo con CPU-bound operations su dataset grandi (>10K elementi) da sorgenti splittabili.</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>Q: Come combini OOP e FP in un progetto Java moderno?</h4>
+                    <p><strong>Risposta attesa:</strong> L'approccio ibrido: 1) Domain model con OOP - entità come User, Order con identità e comportamento incapsulato. 2) Service layer con FP - logica di business come trasformazioni di dati usando Streams. 3) DTOs/Records immutabili - per trasferimento dati tra layer. 4) Optional per null-safety nei return types. 5) Collectors per aggregazioni complesse. 6) Funzioni pure per logica testabile isolata. Esempio: Spring Service con bean mutabile ma metodi che usano Streams per processare dati, ritornando Record immutabili.</p>
+                </div>
+            </section>
+
         </main>
     </div>
 
@@ -7637,6 +9082,98 @@ public List&lt;Document&gt; hybridSearch(String query) {
                     a: '❌ Sbagliato. Terraform non serializza automaticamente nulla. È responsabilità dell\'utente/team configurare state locking con DynamoDB, Consul, o Terraform Cloud.',
                     b: '❌ Sbagliato. Senza locking, non c\'è nessun errore di conflitto. Entrambi gli apply procedono "felicemente" e il problema emerge dopo, quando lo state è già corrotto.',
                     d: '❌ Sbagliato. Le risorse non vengono duplicate automaticamente. Il problema è nello STATE, non nelle risorse cloud. Una delle modifiche viene "persa" dallo state tracking.'
+                }
+            },
+            // Modulo 7: Coding Challenges
+            q31: {
+                correct: 'b',
+                correctText: '✅ Corretto! Con una Singly Linked List, per rimuovere un nodo devi conoscere il nodo precedente, il che richiede O(n) traversal. Con una Doubly Linked List, ogni nodo ha un puntatore al precedente (prev), quindi la rimozione è O(1): basta fare node.prev.next = node.next e node.next.prev = node.prev. Questo è cruciale per mantenere O(1) sia per get() che per put().',
+                incorrectText: {
+                    a: '❌ Sbagliato. L\'iterazione bidirezionale non è necessaria per LRU Cache. Ci serve solo aggiungere in testa e rimuovere dalla coda (o rimuovere un nodo arbitrario quando viene accesso).',
+                    c: '❌ Sbagliato. Una Doubly Linked List usa PIÙ spazio (un puntatore extra per nodo), non meno. Il trade-off è spazio per tempo.',
+                    d: '❌ Sbagliato. Java supporta implementazioni di liste singly linked. LinkedList di Java è in realtà una doubly linked list, ma nulla impedisce di implementarne una singly.'
+                }
+            },
+            q32: {
+                correct: 'c',
+                correctText: '✅ Corretto! LinkedHashMap in Java con accessOrder=true mantiene automaticamente l\'ordine di accesso e supporta removeEldestEntry() per l\'eviction automatica. Internamente usa una struttura simile alla nostra (HashMap + doubly linked list), quindi tutte le operazioni sono O(1). Questa è effettivamente la soluzione "production-ready" in Java.',
+                incorrectText: {
+                    a: '❌ Sbagliato. LinkedHashMap ha O(1) per get e put, non O(n). Internamente combina HashMap (O(1) lookup) con linked list (O(1) reordering).',
+                    b: '❌ Sbagliato. L\'eviction in LinkedHashMap è O(1): il nodo più vecchio è sempre in testa alla lista interna, basta rimuoverlo.',
+                    d: '❌ Sbagliato. LinkedHashMap non usa strutture logaritmiche come alberi. È O(1) amortizzato come una normale HashMap.'
+                }
+            },
+            q33: {
+                correct: 'a',
+                correctText: '✅ Corretto! Con solo un tipo di parentesi, non serve uno stack completo. Basta un contatore: incrementa per \'(\', decrementa per \')\'. Se il contatore diventa negativo, la stringa è invalida (più chiuse che aperte). Alla fine, il contatore deve essere 0. Questo è O(1) space. Con parentesi multiple (()[]{}) serve lo stack perché devi matchare il TIPO corretto.',
+                incorrectText: {
+                    b: '❌ Sbagliato. Lo stack è necessario solo per parentesi multiple dove devi verificare che la chiusura corrisponda all\'apertura giusta. Con un solo tipo, il contatore basta.',
+                    c: '❌ Sbagliato. Non esiste una soluzione O(log n) space per questo problema. È O(1) con contatore o O(n) con stack.',
+                    d: '❌ Sbagliato. Non serve confrontare ogni coppia. Basta un singolo passaggio O(n) time con O(1) space (contatore).'
+                }
+            },
+            q34: {
+                correct: 'd',
+                correctText: '✅ Corretto! Se l\'input è già ordinato per start time, il sorting O(n log n) non è necessario. Il merge richiede solo un singolo passaggio lineare O(n): scorri gli intervalli, e per ognuno decidi se estendere l\'ultimo o aggiungerne uno nuovo. Questa è un\'ottimizzazione importante da menzionare al colloquio: chiedi sempre se l\'input ha proprietà speciali!',
+                incorrectText: {
+                    a: '❌ Sbagliato. Se sai che l\'input è ordinato, non devi ri-verificarlo. Puoi procedere direttamente con il merge O(n). Verificare se è ordinato sarebbe comunque O(n), non O(n log n).',
+                    b: '❌ Sbagliato. Non serve confrontare ogni intervallo con tutti gli altri. Con input ordinato, gli intervalli sovrapponibili sono sempre adiacenti.',
+                    c: '❌ Sbagliato. Il problema non diventa O(1). Devi comunque processare tutti gli n intervalli per produrre il risultato. È O(n), non O(1).'
+                }
+            },
+            q35: {
+                correct: 'b',
+                correctText: '✅ Corretto! Il problema principale è l\'atomicità: get() e put() devono aggiornare sia la HashMap che la lista in modo atomico. Se un thread fa get() mentre un altro fa put() con eviction, potresti avere inconsistenze (es. nodo nella HashMap ma non nella lista, o viceversa). ConcurrentHashMap da solo non basta perché non protegge le operazioni sulla lista. Serve sincronizzazione che copra entrambe le strutture.',
+                incorrectText: {
+                    a: '❌ Sbagliato. ConcurrentHashMap protegge solo la HashMap. Le operazioni sulla linked list e l\'atomicità tra HashMap e lista non sono garantite.',
+                    c: '❌ Sbagliato. Tecnicamente puoi condividere la lista, ma devi sincronizzare gli accessi. Il problema è l\'atomicità delle operazioni composite, non la condivisione in sé.',
+                    d: '❌ Sbagliato. Le strutture dati standard in Java (HashMap, LinkedList, etc.) NON sono thread-safe. Solo le classi in java.util.concurrent lo sono.'
+                }
+            },
+            // Modulo 8: Paradigmi di Programmazione
+            q36: {
+                correct: 'c',
+                correctText: '✅ Corretto! add(a, b) è pura: dato gli stessi a e b, ritorna sempre lo stesso risultato (a+b) e non ha side effects. Le altre: count() modifica stato esterno (counter++), random() non è deterministica (ritorna valori diversi), log() ha side effect (scrive su stdout).',
+                incorrectText: {
+                    a: '❌ Sbagliato. counter++ è un side effect: modifica stato esterno alla funzione. Inoltre, chiamate successive ritornano valori diversi anche senza argomenti.',
+                    b: '❌ Sbagliato. Math.random() non è deterministica: ogni chiamata ritorna un valore diverso. Una funzione pura deve ritornare lo stesso output per lo stesso input.',
+                    d: '❌ Sbagliato. System.out.println() è un side effect: modifica il "mondo esterno" (scrive su stdout). Inoltre ritorna void, non trasforma input in output.'
+                }
+            },
+            q37: {
+                correct: 'b',
+                correctText: '✅ Corretto! Le operazioni I/O-bound (network, disk) NON beneficiano di parallel streams perché: 1) Il thread aspetta la risposta, non usa CPU. 2) Il ForkJoinPool comune è progettato per CPU-bound tasks. 3) Operazioni bloccanti possono "affamare" altri parallel streams. Per I/O parallelo, usa CompletableFuture con un executor dedicato o reactive streams.',
+                incorrectText: {
+                    a: '❌ Sbagliato. Operazioni CPU-intensive come isPrime sono il caso d\'uso IDEALE per parallel streams: dividono il lavoro di calcolo tra i core.',
+                    c: '❌ Sbagliato. complexCalculation è CPU-bound, quindi beneficia del parallelismo. Ogni core può eseguire calcoli indipendenti.',
+                    d: '❌ Sbagliato. reduce può essere parallelizzato se l\'operazione è associativa (come la somma). Java partiziona i dati, riduce in parallelo, poi combina i risultati.'
+                }
+            },
+            q38: {
+                correct: 'd',
+                correctText: '✅ Corretto! orElse() valuta SEMPRE l\'argomento, anche se Optional ha un valore. Se Optional contiene "Alice", expensiveComputation() viene comunque eseguita (poi ignorata). Questo è un bug di performance silenzioso. Usa orElseGet(() -> expensiveComputation()) per lazy evaluation: il supplier viene chiamato solo se Optional è vuoto.',
+                incorrectText: {
+                    a: '❌ Sbagliato. orElse("default") è corretto: "default" è una costante, non c\'è calcolo sprecato.',
+                    b: '❌ Sbagliato. map() è lazy e corretto: trasforma il valore solo se presente, altrimenti propaga Optional.empty().',
+                    c: '❌ Sbagliato. orElseThrow() è corretto per casi dove l\'assenza è un errore. Lancia eccezione esplicitamente, non è un bug silenzioso.'
+                }
+            },
+            q39: {
+                correct: 'a',
+                correctText: '✅ Corretto! La laziness permette: 1) Short-circuit: findFirst() si ferma al primo match senza processare tutto. 2) Loop fusion: filter().map() può essere fuso in un singolo passaggio invece di creare collezioni intermedie. 3) Nessun lavoro sprecato: se non c\'è operazione terminale, nulla viene eseguito. Questo è cruciale per performance su dataset grandi.',
+                incorrectText: {
+                    b: '❌ Sbagliato. La laziness non riguarda la thread-safety. Gli Stream possono avere race conditions se usati impropriamente (es. side effects in forEach parallelo).',
+                    c: '❌ Sbagliato. La laziness è una scelta di design per performance, non per compatibilità. Era una feature nuova in Java 8.',
+                    d: '❌ Sbagliato. Java può eseguire metodi void. La laziness è intenzionale per ottimizzazione, non una limitazione del linguaggio.'
+                }
+            },
+            q40: {
+                correct: 'c',
+                correctText: '✅ Corretto! Se un oggetto è immutabile, non può cambiare stato dopo la creazione. Questo significa che: 1) Non servono lock/synchronized per leggere. 2) Non esistono race conditions (nessuno può modificare mentre un altro legge). 3) Puoi condividere liberamente tra thread. Questo semplifica enormemente la programmazione concorrente, eliminando intere categorie di bug.',
+                incorrectText: {
+                    a: '❌ Sbagliato. L\'immutabilità può aumentare l\'uso di memoria (ogni "modifica" crea un nuovo oggetto). La condivisione è safe ma non necessariamente riduce memoria.',
+                    b: '❌ Sbagliato. Il GC non lavora "più efficientemente" con oggetti immutabili. Anzi, creare molti oggetti può aumentare la pressione sul GC.',
+                    d: '❌ Sbagliato. L\'immutabilità non rende automaticamente il codice più veloce. Il vantaggio è la sicurezza thread-safe, non la raw performance.'
                 }
             }
         };
