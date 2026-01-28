@@ -4683,12 +4683,1222 @@ public void sendConfirmationEmail(EmailNotification notification) {
                 </div>
             </section>
 
+            <!-- ============================================== -->
+            <!-- MODULO 5: CLOUD & DEVOPS -->
+            <!-- ============================================== -->
+
+            <header class="module-header" id="modulo5">
+                <span class="module-tag">Modulo 5</span>
+                <h1>Cloud & DevOps</h1>
+                <p>Containerization, orchestration e strategie di deployment per applicazioni moderne</p>
+            </header>
+
+            <!-- Docker Section -->
+            <section class="section" id="modulo5-docker">
+                <h2>Docker & Containerization</h2>
+
+                <p><strong>Docker</strong> ha rivoluzionato il modo in cui sviluppiamo, testiamo e deployamo applicazioni. Un <em>container</em> è un'unità standardizzata di software che impacchetta il codice insieme a tutte le sue dipendenze, garantendo che l'applicazione funzioni in modo identico indipendentemente dall'ambiente di esecuzione.</p>
+
+                <h3>Container vs Virtual Machine</h3>
+
+                <p>La differenza fondamentale sta nel livello di virtualizzazione:</p>
+
+                <div class="diagram">
+<pre>
+   VIRTUAL MACHINES                    CONTAINERS
+┌─────────────────────┐          ┌─────────────────────┐
+│   App A  │   App B  │          │   App A  │   App B  │
+├──────────┼──────────┤          ├──────────┼──────────┤
+│  Libs A  │  Libs B  │          │  Libs A  │  Libs B  │
+├──────────┼──────────┤          ├──────────┴──────────┤
+│ Guest OS │ Guest OS │          │   Container Engine  │
+├──────────┴──────────┤          │      (Docker)       │
+│     Hypervisor      │          ├─────────────────────┤
+├─────────────────────┤          │      Host OS        │
+│      Host OS        │          ├─────────────────────┤
+├─────────────────────┤          │     Hardware        │
+│     Hardware        │          └─────────────────────┘
+└─────────────────────┘
+</pre>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Caratteristica</th>
+                            <th>Virtual Machine</th>
+                            <th>Container</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Isolamento</td>
+                            <td>Completo (hardware virtualization)</td>
+                            <td>A livello di processo (kernel sharing)</td>
+                        </tr>
+                        <tr>
+                            <td>Boot time</td>
+                            <td>Minuti</td>
+                            <td>Millisecondi/secondi</td>
+                        </tr>
+                        <tr>
+                            <td>Dimensione</td>
+                            <td>GB (include intero OS)</td>
+                            <td>MB (solo app + dipendenze)</td>
+                        </tr>
+                        <tr>
+                            <td>Overhead</td>
+                            <td>Alto (hypervisor + guest OS)</td>
+                            <td>Minimo (condivide kernel host)</td>
+                        </tr>
+                        <tr>
+                            <td>Portabilità</td>
+                            <td>Limitata al tipo di hypervisor</td>
+                            <td>Eccellente (OCI standard)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Dockerfile Best Practices</h3>
+
+                <p>Un <strong>Dockerfile</strong> è un file di testo che contiene tutte le istruzioni per costruire un'immagine Docker. Scrivere Dockerfile efficienti è cruciale per build veloci e immagini sicure.</p>
+
+                <pre><code class="language-dockerfile"># ❌ BAD: Non ottimizzato
+FROM ubuntu:latest
+RUN apt-get update
+RUN apt-get install -y python3
+RUN apt-get install -y python3-pip
+COPY . /app
+RUN pip install -r /app/requirements.txt
+CMD ["python3", "/app/main.py"]
+
+# ✅ GOOD: Ottimizzato
+FROM python:3.11-slim AS base
+
+# Non eseguire come root
+RUN useradd --create-home appuser
+
+WORKDIR /app
+
+# Copia prima i file di dipendenze (cache layer)
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Poi copia il codice sorgente
+COPY --chown=appuser:appuser . .
+
+USER appuser
+
+CMD ["python", "main.py"]</code></pre>
+
+                <div class="info-box">
+                    <h4>Principi chiave per Dockerfile efficienti</h4>
+                    <ul>
+                        <li><strong>Layer ordering</strong>: metti le istruzioni che cambiano meno frequentemente in alto (dipendenze prima del codice)</li>
+                        <li><strong>Minimize layers</strong>: combina RUN commands con <code>&&</code> quando possibile</li>
+                        <li><strong>Use specific tags</strong>: evita <code>:latest</code>, usa versioni esplicite come <code>:3.11-slim</code></li>
+                        <li><strong>Non-root user</strong>: esegui sempre l'applicazione come utente non privilegiato</li>
+                        <li><strong>.dockerignore</strong>: escludi file non necessari (node_modules, .git, __pycache__)</li>
+                    </ul>
+                </div>
+
+                <h3>Multi-stage Builds</h3>
+
+                <p>I <strong>multi-stage builds</strong> permettono di separare l'ambiente di build da quello di runtime, producendo immagini finali molto più piccole e sicure.</p>
+
+                <pre><code class="language-dockerfile"># Stage 1: Build
+FROM maven:3.9-eclipse-temurin-21 AS builder
+WORKDIR /build
+COPY pom.xml .
+# Download dipendenze separatamente per sfruttare la cache
+RUN mvn dependency:go-offline
+COPY src ./src
+RUN mvn package -DskipTests
+
+# Stage 2: Runtime
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+
+# Crea utente non-root
+RUN addgroup -S spring && adduser -S spring -G spring
+
+# Copia SOLO il JAR dal builder stage
+COPY --from=builder /build/target/*.jar app.jar
+
+# Imposta utente non-root
+USER spring:spring
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s \
+  CMD wget -q --spider http://localhost:8080/actuator/health || exit 1
+
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]</code></pre>
+
+                <p>Con questo approccio, l'immagine finale contiene <strong>solo</strong> il JRE e il JAR compilato, non Maven, il codice sorgente o le dipendenze di build. Il risultato è un'immagine che passa da ~500MB a ~150MB.</p>
+
+                <h3>Layer Caching</h3>
+
+                <p>Docker costruisce le immagini layer by layer. Ogni istruzione nel Dockerfile crea un nuovo layer, e Docker può riutilizzare i layer dalla cache se il contenuto non è cambiato.</p>
+
+                <div class="diagram">
+<pre>
+         DOCKER BUILD CACHE MECHANISM
+
+Dockerfile Instruction      Layer Cache Status
+─────────────────────────────────────────────────
+FROM node:20-alpine    →    [CACHED] ✓
+WORKDIR /app           →    [CACHED] ✓
+COPY package*.json .   →    [CACHED] ✓  ← Se package.json non cambia
+RUN npm ci             →    [CACHED] ✓  ← npm install riusato!
+COPY . .               →    [REBUILT] ✗ ← Codice cambiato
+RUN npm run build      →    [REBUILT] ✗ ← Invalidato
+─────────────────────────────────────────────────
+
+⚠️  Una volta invalidato un layer, TUTTI i successivi
+    vengono ricostruiti (cache invalidation cascade)
+</pre>
+                </div>
+
+                <div class="info-box warning">
+                    <h4>Attenzione: Cache Invalidation</h4>
+                    <p>L'ordine delle istruzioni è critico. Se metti <code>COPY . .</code> prima di <code>RUN npm install</code>, ogni modifica al codice invaliderà la cache delle dipendenze, rendendo ogni build molto più lenta.</p>
+                </div>
+
+                <h3>Docker Compose per sviluppo locale</h3>
+
+                <pre><code class="language-yaml"># docker-compose.yml
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - DATABASE_URL=jdbc:postgresql://db:5432/myapp
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src  # Hot reload in dev
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: myapp
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d myapp"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_data:</code></pre>
+            </section>
+
+            <!-- Kubernetes Section -->
+            <section class="section" id="modulo5-kubernetes">
+                <h2>Kubernetes (K8s)</h2>
+
+                <p><strong>Kubernetes</strong> è una piattaforma open-source per l'orchestrazione di container. Automatizza il deployment, lo scaling e la gestione di applicazioni containerizzate. Originariamente sviluppato da Google, è ora mantenuto dalla Cloud Native Computing Foundation (CNCF).</p>
+
+                <h3>Architettura di un Cluster Kubernetes</h3>
+
+                <div class="diagram">
+<pre>
+                    KUBERNETES CLUSTER ARCHITECTURE
+
+┌──────────────────────────────────────────────────────────────────┐
+│                        CONTROL PLANE                              │
+│  ┌─────────────┐  ┌─────────────┐  ┌───────────┐  ┌───────────┐  │
+│  │ API Server  │  │  Scheduler  │  │Controller │  │   etcd    │  │
+│  │             │  │             │  │  Manager  │  │ (storage) │  │
+│  └──────┬──────┘  └──────┬──────┘  └─────┬─────┘  └───────────┘  │
+└─────────┼────────────────┼───────────────┼───────────────────────┘
+          │                │               │
+          └────────────────┼───────────────┘
+                           │
+        ┌──────────────────┴──────────────────┐
+        │                                      │
+        ▼                                      ▼
+┌───────────────────────────┐    ┌───────────────────────────┐
+│      WORKER NODE 1        │    │      WORKER NODE 2        │
+│  ┌─────────────────────┐  │    │  ┌─────────────────────┐  │
+│  │       kubelet       │  │    │  │       kubelet       │  │
+│  └─────────────────────┘  │    │  └─────────────────────┘  │
+│  ┌─────────────────────┐  │    │  ┌─────────────────────┐  │
+│  │     kube-proxy      │  │    │  │     kube-proxy      │  │
+│  └─────────────────────┘  │    │  └─────────────────────┘  │
+│  ┌────────┐ ┌────────┐   │    │  ┌────────┐ ┌────────┐   │
+│  │  Pod   │ │  Pod   │   │    │  │  Pod   │ │  Pod   │   │
+│  │┌──────┐│ │┌──────┐│   │    │  │┌──────┐│ │┌──────┐│   │
+│  ││ App  ││ ││ App  ││   │    │  ││ App  ││ ││ App  ││   │
+│  │└──────┘│ │└──────┘│   │    │  │└──────┘│ │└──────┘│   │
+│  └────────┘ └────────┘   │    │  └────────┘ └────────┘   │
+└───────────────────────────┘    └───────────────────────────┘
+</pre>
+                </div>
+
+                <h3>Componenti fondamentali</h3>
+
+                <h4>Pod</h4>
+                <p>Il <strong>Pod</strong> è l'unità minima di deployment in Kubernetes. Rappresenta uno o più container che condividono storage, rete e specifiche su come eseguire i container. I container in un Pod condividono lo stesso indirizzo IP e possono comunicare via localhost.</p>
+
+                <pre><code class="language-yaml"># pod.yaml - Definizione base di un Pod
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-app
+  labels:
+    app: my-app
+    environment: production
+spec:
+  containers:
+    - name: app
+      image: my-registry/my-app:1.2.3
+      ports:
+        - containerPort: 8080
+      resources:
+        requests:          # Risorse minime garantite
+          memory: "256Mi"
+          cpu: "250m"      # 0.25 CPU core
+        limits:            # Limiti massimi
+          memory: "512Mi"
+          cpu: "500m"
+      livenessProbe:       # Il container è vivo?
+        httpGet:
+          path: /actuator/health/liveness
+          port: 8080
+        initialDelaySeconds: 30
+        periodSeconds: 10
+      readinessProbe:      # Il container può ricevere traffico?
+        httpGet:
+          path: /actuator/health/readiness
+          port: 8080
+        initialDelaySeconds: 5
+        periodSeconds: 5
+      env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: "prod"
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: password</code></pre>
+
+                <div class="info-box">
+                    <h4>Liveness vs Readiness Probe</h4>
+                    <ul>
+                        <li><strong>Liveness Probe</strong>: verifica se il container è vivo. Se fallisce, Kubernetes <em>riavvia</em> il container. Usa questo per rilevare deadlock o stati corrotti.</li>
+                        <li><strong>Readiness Probe</strong>: verifica se il container può ricevere traffico. Se fallisce, il Pod viene <em>rimosso</em> dal Service (niente restart). Usa questo durante startup o quando il Pod è temporaneamente sovraccarico.</li>
+                    </ul>
+                </div>
+
+                <h4>Deployment</h4>
+                <p>Un <strong>Deployment</strong> gestisce il ciclo di vita dei Pod, garantendo che il numero desiderato di repliche sia sempre in esecuzione. Fornisce rolling updates e rollback.</p>
+
+                <pre><code class="language-yaml"># deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app
+  labels:
+    app: my-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: my-app
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1        # Max Pod extra durante update
+      maxUnavailable: 0  # Zero downtime
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+        - name: app
+          image: my-registry/my-app:1.2.3
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"</code></pre>
+
+                <h4>Service</h4>
+                <p>Un <strong>Service</strong> espone un'applicazione in esecuzione su un set di Pod come servizio di rete. I Service forniscono un DNS name stabile e load balancing tra i Pod.</p>
+
+                <pre><code class="language-yaml"># service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-service
+spec:
+  type: ClusterIP          # Solo interno al cluster
+  selector:
+    app: my-app            # Seleziona i Pod con questo label
+  ports:
+    - port: 80             # Porta del Service
+      targetPort: 8080     # Porta del container
+      protocol: TCP</code></pre>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Service Type</th>
+                            <th>Visibilità</th>
+                            <th>Use Case</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>ClusterIP</code></td>
+                            <td>Solo interno al cluster</td>
+                            <td>Comunicazione tra microservizi</td>
+                        </tr>
+                        <tr>
+                            <td><code>NodePort</code></td>
+                            <td>Espone su ogni nodo (porta 30000-32767)</td>
+                            <td>Testing, ambienti non-production</td>
+                        </tr>
+                        <tr>
+                            <td><code>LoadBalancer</code></td>
+                            <td>Espone via cloud load balancer</td>
+                            <td>Traffico esterno in produzione (cloud)</td>
+                        </tr>
+                        <tr>
+                            <td><code>ExternalName</code></td>
+                            <td>Alias DNS per servizi esterni</td>
+                            <td>Integrazione con servizi fuori dal cluster</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h4>Ingress</h4>
+                <p><strong>Ingress</strong> gestisce l'accesso esterno ai servizi nel cluster, tipicamente HTTP/HTTPS. Fornisce load balancing, SSL termination e virtual hosting basato su nome.</p>
+
+                <pre><code class="language-yaml"># ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: my-app-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - api.mycompany.com
+      secretName: api-tls-secret
+  rules:
+    - host: api.mycompany.com
+      http:
+        paths:
+          - path: /users
+            pathType: Prefix
+            backend:
+              service:
+                name: user-service
+                port:
+                  number: 80
+          - path: /orders
+            pathType: Prefix
+            backend:
+              service:
+                name: order-service
+                port:
+                  number: 80</code></pre>
+
+                <h4>ConfigMaps e Secrets</h4>
+                <p><strong>ConfigMaps</strong> e <strong>Secrets</strong> permettono di separare la configurazione dal codice dell'applicazione, seguendo il principio delle twelve-factor apps.</p>
+
+                <pre><code class="language-yaml"># configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  application.properties: |
+    server.port=8080
+    logging.level.root=INFO
+  FEATURE_FLAG_NEW_UI: "true"
+
+---
+# secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db-credentials
+type: Opaque
+data:
+  # Valori codificati in base64 (NON encrypted!)
+  username: YWRtaW4=           # echo -n 'admin' | base64
+  password: cGFzc3dvcmQxMjM=   # echo -n 'password123' | base64</code></pre>
+
+                <div class="info-box warning">
+                    <h4>Secrets non sono sicuri di default!</h4>
+                    <p>I Secret Kubernetes sono solo base64 encoded, non encrypted. Per una gestione sicura dei secrets in produzione, considera: <strong>HashiCorp Vault</strong>, <strong>AWS Secrets Manager</strong>, <strong>Azure Key Vault</strong>, o <strong>Sealed Secrets</strong> per GitOps.</p>
+                </div>
+
+                <h4>Horizontal Pod Autoscaler (HPA)</h4>
+                <p>L'<strong>HPA</strong> scala automaticamente il numero di Pod in un Deployment basandosi su metriche osservate (CPU, memoria, o metriche custom).</p>
+
+                <pre><code class="language-yaml"># hpa.yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: my-app-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: my-app
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70    # Scala se CPU > 70%
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300  # Attendi 5 min prima di scale down
+      policies:
+        - type: Percent
+          value: 10
+          periodSeconds: 60</code></pre>
+            </section>
+
+            <!-- CI/CD Section -->
+            <section class="section" id="modulo5-cicd">
+                <h2>CI/CD Pipelines</h2>
+
+                <p><strong>Continuous Integration</strong> (CI) è la pratica di integrare frequentemente il codice in un repository condiviso, con build e test automatici. <strong>Continuous Delivery/Deployment</strong> (CD) estende CI automatizzando il rilascio del software in ambienti di staging e produzione.</p>
+
+                <div class="diagram">
+<pre>
+                    CI/CD PIPELINE FLOW
+
+┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐
+│  CODE   │───▶│  BUILD  │───▶│  TEST   │───▶│ DEPLOY  │───▶│ MONITOR │
+│  PUSH   │    │         │    │         │    │STAGING  │    │         │
+└─────────┘    └─────────┘    └─────────┘    └────┬────┘    └─────────┘
+                                                  │
+     ┌────────────────────────────────────────────┘
+     │
+     ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│                    PRODUCTION DEPLOYMENT                              │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐               │
+│  │  Approval   │───▶│   Deploy    │───▶│  Validate   │               │
+│  │  (manual?)  │    │  Strategy   │    │  & Rollback │               │
+│  └─────────────┘    └─────────────┘    └─────────────┘               │
+└──────────────────────────────────────────────────────────────────────┘
+</pre>
+                </div>
+
+                <h3>GitHub Actions</h3>
+
+                <p><strong>GitHub Actions</strong> è una piattaforma CI/CD integrata in GitHub. I workflow sono definiti in file YAML nella directory <code>.github/workflows/</code>.</p>
+
+                <pre><code class="language-yaml"># .github/workflows/ci-cd.yml
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Run tests
+        run: mvn verify --batch-mode
+
+      - name: Upload coverage report
+        uses: codecov/codecov-action@v3
+        with:
+          files: target/site/jacoco/jacoco.xml
+
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=
+            type=ref,event=branch
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-staging:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Deploy to Kubernetes
+        uses: azure/k8s-deploy@v4
+        with:
+          manifests: |
+            k8s/deployment.yaml
+            k8s/service.yaml
+          images: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+  deploy-production:
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    environment: production  # Richiede approval manuale
+    steps:
+      - name: Deploy to Production
+        run: |
+          # Deploy con strategia blue-green o canary
+          kubectl set image deployment/my-app \
+            app=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}</code></pre>
+
+                <h3>Jenkins Pipeline</h3>
+
+                <p><strong>Jenkins</strong> è uno dei più diffusi automation server per CI/CD. I pipeline moderni usano la sintassi <em>Declarative Pipeline</em> definita in un <code>Jenkinsfile</code>.</p>
+
+                <pre><code class="language-groovy">// Jenkinsfile
+pipeline {
+    agent {
+        kubernetes {
+            yaml '''
+                apiVersion: v1
+                kind: Pod
+                spec:
+                  containers:
+                  - name: maven
+                    image: maven:3.9-eclipse-temurin-21
+                    command: ['sleep', 'infinity']
+                  - name: docker
+                    image: docker:24-dind
+                    securityContext:
+                      privileged: true
+            '''
+        }
+    }
+
+    environment {
+        REGISTRY = 'ghcr.io/myorg'
+        IMAGE_NAME = 'my-app'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Test') {
+            steps {
+                container('maven') {
+                    sh 'mvn verify'
+                }
+            }
+            post {
+                always {
+                    junit 'target/surefire-reports/*.xml'
+                    jacoco execPattern: 'target/jacoco.exec'
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            when {
+                branch 'main'
+            }
+            steps {
+                container('docker') {
+                    script {
+                        def image = docker.build("${REGISTRY}/${IMAGE_NAME}:${GIT_COMMIT}")
+                        docker.withRegistry('https://ghcr.io', 'github-credentials') {
+                            image.push()
+                            image.push('latest')
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to Staging') {
+            when {
+                branch 'main'
+            }
+            steps {
+                withKubeConfig([credentialsId: 'k8s-staging']) {
+                    sh """
+                        kubectl set image deployment/my-app \
+                            app=${REGISTRY}/${IMAGE_NAME}:${GIT_COMMIT} \
+                            -n staging
+                        kubectl rollout status deployment/my-app -n staging
+                    """
+                }
+            }
+        }
+
+        stage('Deploy to Production') {
+            when {
+                branch 'main'
+            }
+            input {
+                message "Deploy to production?"
+                ok "Deploy"
+            }
+            steps {
+                withKubeConfig([credentialsId: 'k8s-production']) {
+                    sh """
+                        kubectl set image deployment/my-app \
+                            app=${REGISTRY}/${IMAGE_NAME}:${GIT_COMMIT} \
+                            -n production
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        failure {
+            slackSend channel: '#deploys',
+                      color: 'danger',
+                      message: "Build FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+        }
+        success {
+            slackSend channel: '#deploys',
+                      color: 'good',
+                      message: "Build SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+        }
+    }
+}</code></pre>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Aspetto</th>
+                            <th>GitHub Actions</th>
+                            <th>Jenkins</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Hosting</td>
+                            <td>SaaS (managed by GitHub)</td>
+                            <td>Self-hosted o managed</td>
+                        </tr>
+                        <tr>
+                            <td>Configurazione</td>
+                            <td>YAML in <code>.github/workflows/</code></td>
+                            <td>Jenkinsfile (Groovy)</td>
+                        </tr>
+                        <tr>
+                            <td>Curva di apprendimento</td>
+                            <td>Bassa</td>
+                            <td>Alta (ma più flessibile)</td>
+                        </tr>
+                        <tr>
+                            <td>Marketplace/Plugin</td>
+                            <td>GitHub Marketplace (Actions)</td>
+                            <td>Vastissimo ecosistema plugin</td>
+                        </tr>
+                        <tr>
+                            <td>Ideale per</td>
+                            <td>Progetti su GitHub, team piccoli-medi</td>
+                            <td>Enterprise, requisiti complessi</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Deployment Strategies Section -->
+            <section class="section" id="modulo5-deployment">
+                <h2>Deployment Strategies</h2>
+
+                <p>La scelta della strategia di deployment impatta direttamente su <strong>downtime</strong>, <strong>rischio</strong> e <strong>velocità di rollback</strong>. Vediamo le strategie più comuni.</p>
+
+                <h3>Rolling Update</h3>
+
+                <p>Il <strong>Rolling Update</strong> è la strategia di default in Kubernetes. I Pod vengono aggiornati gradualmente, sostituendo le vecchie istanze con le nuove una alla volta.</p>
+
+                <div class="diagram">
+<pre>
+              ROLLING UPDATE PROGRESSION
+
+Time 0:   [v1] [v1] [v1] [v1]     ← 4 Pod versione 1
+
+Time 1:   [v1] [v1] [v1] [v2]     ← 1 nuovo Pod v2 creato
+
+Time 2:   [v1] [v1] [v2] [v2]     ← Gradualmente sostituiti
+
+Time 3:   [v1] [v2] [v2] [v2]
+
+Time 4:   [v2] [v2] [v2] [v2]     ← Tutti i Pod aggiornati
+
+✅ Pro: Zero downtime, uso efficiente delle risorse
+❌ Contro: Rollback lento, due versioni coesistono temporaneamente
+</pre>
+                </div>
+
+                <pre><code class="language-yaml"># Rolling Update in Kubernetes
+spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%        # Max Pod extra durante update
+      maxUnavailable: 25%  # Max Pod non disponibili</code></pre>
+
+                <h3>Blue-Green Deployment</h3>
+
+                <p>Nel <strong>Blue-Green Deployment</strong> mantieni due ambienti identici: Blue (produzione attuale) e Green (nuova versione). Il traffico viene switchato istantaneamente tramite load balancer.</p>
+
+                <div class="diagram">
+<pre>
+              BLUE-GREEN DEPLOYMENT
+
+┌─────────────────────────────────────────────────────┐
+│                  LOAD BALANCER                       │
+│                       │                              │
+│         ┌─────────────┴─────────────┐               │
+│         │                           │               │
+│         ▼                           ▼               │
+│  ┌─────────────┐            ┌─────────────┐        │
+│  │    BLUE     │            │    GREEN    │        │
+│  │   (v1.0)    │            │   (v1.1)    │        │
+│  │  [ACTIVE]   │            │  [STANDBY]  │        │
+│  │             │            │             │        │
+│  │ [Pod] [Pod] │            │ [Pod] [Pod] │        │
+│  └─────────────┘            └─────────────┘        │
+└─────────────────────────────────────────────────────┘
+
+                    AFTER SWITCH
+
+                  LOAD BALANCER
+                       │
+         ┌─────────────┴─────────────┐
+         │                           │
+         ▼                           ▼
+  ┌─────────────┐            ┌─────────────┐
+  │    BLUE     │            │    GREEN    │
+  │   (v1.0)    │            │   (v1.1)    │
+  │  [STANDBY]  │            │  [ACTIVE]   │ ← Traffic
+  └─────────────┘            └─────────────┘
+
+✅ Pro: Rollback istantaneo, zero downtime
+❌ Contro: Richiede il doppio delle risorse
+</pre>
+                </div>
+
+                <pre><code class="language-yaml"># Blue-Green con Kubernetes Services
+# Service che punta all'ambiente attivo
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-production
+spec:
+  selector:
+    app: my-app
+    version: green    # Switch: cambia da "blue" a "green"
+  ports:
+    - port: 80
+      targetPort: 8080
+
+---
+# Deployment Blue
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app-blue
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: my-app
+      version: blue
+  template:
+    metadata:
+      labels:
+        app: my-app
+        version: blue
+    spec:
+      containers:
+        - name: app
+          image: my-app:1.0.0
+
+---
+# Deployment Green
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app-green
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: my-app
+      version: green
+  template:
+    metadata:
+      labels:
+        app: my-app
+        version: green
+    spec:
+      containers:
+        - name: app
+          image: my-app:1.1.0</code></pre>
+
+                <h3>Canary Deployment</h3>
+
+                <p>Il <strong>Canary Deployment</strong> rilascia la nuova versione a un piccolo subset di utenti (es. 5%) prima di procedere con il rollout completo. Permette di validare la nuova versione in produzione con rischio limitato.</p>
+
+                <div class="diagram">
+<pre>
+              CANARY DEPLOYMENT PROGRESSION
+
+Phase 1: Initial Canary (5% traffic)
+┌────────────────────────────────────────┐
+│            INGRESS CONTROLLER          │
+│                   │                    │
+│         95%       │        5%          │
+│           ┌───────┴───────┐            │
+│           ▼               ▼            │
+│    ┌───────────┐   ┌───────────┐       │
+│    │  STABLE   │   │  CANARY   │       │
+│    │   v1.0    │   │   v1.1    │       │
+│    │ 10 Pods   │   │  1 Pod    │       │
+│    └───────────┘   └───────────┘       │
+└────────────────────────────────────────┘
+
+Phase 2: Gradual Increase (25% traffic)
+         75%               25%
+
+Phase 3: Full Rollout (100% traffic)
+          0%               100%
+
+✅ Pro: Rischio minimizzato, validazione in produzione reale
+❌ Contro: Complessità di routing, monitoring rigoroso necessario
+</pre>
+                </div>
+
+                <pre><code class="language-yaml"># Canary con Argo Rollouts
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: my-app
+spec:
+  replicas: 10
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+        - name: app
+          image: my-app:1.1.0
+  strategy:
+    canary:
+      steps:
+        - setWeight: 5        # 5% traffico al canary
+        - pause: {duration: 5m}
+        - setWeight: 25       # 25% traffico
+        - pause: {duration: 10m}
+        - setWeight: 50       # 50% traffico
+        - pause: {duration: 10m}
+        # Analisi automatica delle metriche
+        - analysis:
+            templates:
+              - templateName: success-rate
+            args:
+              - name: service-name
+                value: my-app
+      # Rollback automatico se l'analisi fallisce
+      analysis:
+        successfulRunHistoryLimit: 3
+        unsuccessfulRunHistoryLimit: 3
+
+---
+# Template di analisi per Canary
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: success-rate
+spec:
+  args:
+    - name: service-name
+  metrics:
+    - name: success-rate
+      interval: 1m
+      successCondition: result[0] >= 0.95  # 95% success rate
+      provider:
+        prometheus:
+          address: http://prometheus:9090
+          query: |
+            sum(rate(http_requests_total{service="{{args.service-name}}",status=~"2.."}[5m])) /
+            sum(rate(http_requests_total{service="{{args.service-name}}"}[5m]))</code></pre>
+
+                <h3>Confronto Strategie di Deployment</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Strategia</th>
+                            <th>Downtime</th>
+                            <th>Rischio</th>
+                            <th>Rollback</th>
+                            <th>Risorse</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Recreate</strong></td>
+                            <td>Sì (breve)</td>
+                            <td>Alto</td>
+                            <td>Lento</td>
+                            <td>Normali</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Rolling Update</strong></td>
+                            <td>No</td>
+                            <td>Medio</td>
+                            <td>Medio</td>
+                            <td>Normali + surge</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Blue-Green</strong></td>
+                            <td>No</td>
+                            <td>Basso</td>
+                            <td>Istantaneo</td>
+                            <td>2x</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Canary</strong></td>
+                            <td>No</td>
+                            <td>Molto basso</td>
+                            <td>Istantaneo</td>
+                            <td>Normali + canary</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="info-box success">
+                    <h4>Best Practice: Feature Flags + Canary</h4>
+                    <p>Combina <strong>Feature Flags</strong> con <strong>Canary Deployment</strong> per il massimo controllo. Puoi deployare codice con feature disabilitate, poi abilitarle gradualmente indipendentemente dal deployment. Strumenti: LaunchDarkly, Unleash, Flagsmith.</p>
+                </div>
+            </section>
+
+            <!-- Quiz Modulo 5 -->
+            <section class="quiz-section" id="modulo5-quiz">
+                <h2>Interactive Challenge Quiz - Modulo 5</h2>
+                <p>Testa la tua comprensione di Docker, Kubernetes e strategie di deployment.</p>
+
+                <!-- Question 21 -->
+                <div class="quiz-question" data-correct="c">
+                    <h4><span>Q1.</span> Un Dockerfile ha questo ordine di istruzioni: <code>COPY . .</code>, poi <code>RUN npm install</code>, poi <code>RUN npm build</code>. Cosa succede quando modifichi solo un file TypeScript e rebuildi?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q21" id="q21a" value="a">
+                            <label for="q21a">Solo <code>npm build</code> viene rieseguito, le dipendenze sono cached</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q21" id="q21b" value="b">
+                            <label for="q21b">Docker usa il layer cache e non riesegue nulla</label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q21" id="q21c" value="c">
+                            <label for="q21c">Sia <code>npm install</code> che <code>npm build</code> vengono rieseguiti</label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q21" id="q21d" value="d">
+                            <label for="q21d">Solo <code>COPY</code> viene rieseguito, i RUN sono sempre cached</label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q21')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q21"></div>
+                </div>
+
+                <!-- Question 22 -->
+                <div class="quiz-question" data-correct="b">
+                    <h4><span>Q2.</span> In Kubernetes, un Pod ha <code>readinessProbe</code> che fallisce ma <code>livenessProbe</code> che passa. Cosa succede?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q22" id="q22a" value="a">
+                            <label for="q22a">Il Pod viene riavviato perché non è "ready"</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q22" id="q22b" value="b">
+                            <label for="q22b">Il Pod continua a girare ma viene rimosso dagli endpoint del Service</label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q22" id="q22c" value="c">
+                            <label for="q22c">Il Pod viene terminato e ricreato dal Deployment</label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q22" id="q22d" value="d">
+                            <label for="q22d">Nulla, readinessProbe è solo informativa</label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q22')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q22"></div>
+                </div>
+
+                <!-- Question 23 -->
+                <div class="quiz-question" data-correct="d">
+                    <h4><span>Q3.</span> Stai configurando un Horizontal Pod Autoscaler (HPA) basato su CPU. I Pod hanno <code>requests.cpu: 200m</code> e <code>limits.cpu: 500m</code>. L'HPA è configurato per scalare quando la CPU supera il 70%. A quale utilizzo effettivo scatta lo scaling?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q23" id="q23a" value="a">
+                            <label for="q23a">350m (70% di 500m limits)</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q23" id="q23b" value="b">
+                            <label for="q23b">Quando il nodo raggiunge il 70% di CPU</label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q23" id="q23c" value="c">
+                            <label for="q23c">Non è possibile determinarlo senza conoscere le metriche attuali</label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q23" id="q23d" value="d">
+                            <label for="q23d">140m (70% di 200m requests)</label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q23')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q23"></div>
+                </div>
+
+                <!-- Question 24 -->
+                <div class="quiz-question" data-correct="a">
+                    <h4><span>Q4.</span> Durante un Canary deployment al 10%, noti che il tasso di errore del canary è del 5% mentre la versione stable ha 0.1%. Qual è l'azione corretta?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q24" id="q24a" value="a">
+                            <label for="q24a">Rollback immediato: il canary ha 50x più errori della versione stable</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q24" id="q24b" value="b">
+                            <label for="q24b">Continuare: 5% di errori è accettabile per un canary</label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q24" id="q24c" value="c">
+                            <label for="q24c">Aumentare il traffico al 25% per raccogliere più dati</label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q24" id="q24d" value="d">
+                            <label for="q24d">Ignorare: gli errori sono probabilmente transitori</label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q24')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q24"></div>
+                </div>
+
+                <!-- Question 25 -->
+                <div class="quiz-question" data-correct="c">
+                    <h4><span>Q5.</span> In un Blue-Green deployment, dopo lo switch al Green, scopri un bug critico dopo 30 minuti. Come procedi?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q25" id="q25a" value="a">
+                            <label for="q25a">Fix forward: correggi il bug e fai un nuovo deployment Green</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q25" id="q25b" value="b">
+                            <label for="q25b">Rolling update per tornare gradualmente alla versione Blue</label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q25" id="q25c" value="c">
+                            <label for="q25c">Switch istantaneo del load balancer/service back to Blue</label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q25" id="q25d" value="d">
+                            <label for="q25d">Scale down Green a 0 replica e aspettare che Blue riceva tutto il traffico</label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q25')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q25"></div>
+                </div>
+            </section>
+
         </main>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-docker.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-groovy.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
     <script>
         // Quiz feedback explanations
         const explanations = {
@@ -4864,6 +6074,52 @@ public void sendConfirmationEmail(EmailNotification notification) {
                     a: '❌ Sbagliato. acks non riguarda i consumer, ma la REPLICAZIONE tra broker. I consumer non sono coinvolti nel processo di ack del producer.',
                     c: '❌ Sbagliato. La compressione è configurata separatamente (compression.type). acks riguarda solo la conferma di scrittura.',
                     d: '❌ Sbagliato. Le transazioni Kafka si abilitano con transactional.id e enable.idempotence. acks=all è necessario per exactly-once, ma da solo non abilita le transazioni.'
+                }
+            },
+            // Modulo 5: Cloud & DevOps
+            q21: {
+                correct: 'c',
+                correctText: '✅ Corretto! Questo è il problema classico del Docker layer caching. Quando COPY . . è prima di npm install, OGNI modifica a qualsiasi file invalida il layer COPY. Tutti i layer successivi (npm install, npm build) vengono invalidati e rieseguiti. La soluzione è copiare prima package.json, poi npm install, e infine COPY . . per il resto del codice.',
+                incorrectText: {
+                    a: '❌ Sbagliato. Docker non può sapere che npm build dipende solo dai file TypeScript. Vede solo che il layer COPY è cambiato, quindi invalida TUTTI i layer successivi, incluso npm install.',
+                    b: '❌ Sbagliato. Hai modificato un file, quindi il layer COPY . . è invalidato. Docker DEVE rieseguire quel layer e tutti quelli successivi.',
+                    d: '❌ Sbagliato. I comandi RUN NON sono "sempre cached". Sono cached solo se TUTTI i layer precedenti sono ancora validi. Se COPY cambia, RUN viene rieseguito.'
+                }
+            },
+            q22: {
+                correct: 'b',
+                correctText: '✅ Corretto! La readinessProbe controlla se il Pod può ricevere traffico, NON se deve essere riavviato. Se la readinessProbe fallisce, Kubernetes rimuove il Pod dagli endpoint del Service (quindi non riceve più traffico), ma il Pod continua a girare. Solo la livenessProbe può causare un restart. Questo è utile per Pod temporaneamente sovraccarichi che devono "riprendersi" senza essere riavviati.',
+                incorrectText: {
+                    a: '❌ Sbagliato. Il restart è controllato SOLO dalla livenessProbe. La readinessProbe controlla solo il traffico in ingresso, non il ciclo di vita del container.',
+                    c: '❌ Sbagliato. Nessun Pod viene terminato se la livenessProbe passa. La readinessProbe non può causare terminazione o ricreazione.',
+                    d: '❌ Sbagliato. La readinessProbe ha un effetto concreto: rimuove il Pod dagli endpoint del Service. Questo significa che il load balancer smette di inviare traffico a quel Pod.'
+                }
+            },
+            q23: {
+                correct: 'd',
+                correctText: '✅ Corretto! L\'HPA calcola la percentuale basandosi sulle REQUESTS, non sui limits. Se requests.cpu è 200m e la target utilization è 70%, lo scaling scatta quando il Pod usa 140m (200m × 0.70). I limits definiscono il massimo che il container può usare, ma l\'HPA usa i requests come baseline per il calcolo della percentuale di utilizzo.',
+                incorrectText: {
+                    a: '❌ Sbagliato. L\'HPA usa i REQUESTS come base per il calcolo, non i limits. I limits sono solo un cap massimo, non influenzano il target dell\'HPA.',
+                    b: '❌ Sbagliato. L\'HPA scala basandosi sull\'utilizzo dei singoli Pod rispetto ai loro requests, non sull\'utilizzo totale del nodo.',
+                    c: '❌ Sbagliato. È assolutamente determinabile! L\'HPA usa una formula precisa: target = requests × targetPercentage. Con 200m requests e 70% target, lo scaling scatta a 140m.'
+                }
+            },
+            q24: {
+                correct: 'a',
+                correctText: '✅ Corretto! Un aumento del tasso di errore di 50 volte (da 0.1% a 5%) è un segnale inequivocabile di un problema serio. In un canary deployment, il principio fondamentale è "fail fast": se le metriche indicano un problema, fai rollback immediatamente. Il canary esiste proprio per catturare questi problemi con impatto limitato (solo 10% del traffico). Continuare o aumentare il traffico esporrebbe più utenti al problema.',
+                incorrectText: {
+                    b: '❌ Sbagliato. Il 5% di errori in assoluto potrebbe sembrare basso, ma il confronto con la baseline (0.1%) mostra un peggioramento di 50x. Il canary deployment richiede confronto con la versione stable, non soglie assolute.',
+                    c: '❌ Sbagliato. Aumentare il traffico significa esporre più utenti a una versione problematica. Il canary ha già raccolto abbastanza dati: 50x più errori è statisticamente significativo.',
+                    d: '❌ Sbagliato. Ignorare un incremento di 50x nel tasso di errore è pericoloso. Gli errori potrebbero peggiorare sotto carico maggiore o accumularsi nel tempo.'
+                }
+            },
+            q25: {
+                correct: 'c',
+                correctText: '✅ Corretto! Questo è esattamente il vantaggio principale del Blue-Green deployment: rollback istantaneo. L\'ambiente Blue è ancora attivo e pronto (non è stato terminato dopo lo switch). Basta modificare il Service selector o la configurazione del load balancer per reindirizzare immediatamente tutto il traffico a Blue. Nessun deployment, nessuna attesa, rollback in secondi.',
+                incorrectText: {
+                    a: '❌ Sbagliato. Fix forward richiede tempo (diagnosi, fix, test, build, deploy). Con un bug critico in produzione, vuoi minimizzare il tempo di esposizione. Il rollback istantaneo è sempre preferibile per bug critici.',
+                    b: '❌ Sbagliato. Rolling update è lento e non sfrutti il vantaggio del Blue-Green. Hai già l\'ambiente Blue pronto, perché fare un rolling update quando puoi switchare istantaneamente?',
+                    d: '❌ Sbagliato. Scalare Green a 0 è inutilmente lento e non garantisce uno switch pulito. Il load balancer o Service già punta a Blue, basta cambiare quella configurazione.'
                 }
             }
         };

@@ -52,24 +52,31 @@
   - [x] Kafka vs RabbitMQ (tabella comparativa, when to use what)
   - [x] Quiz interattivo (5 domande, q16-q20)
 
-- [ ] **Modulo 5: Cloud & DevOps**
-  - [ ] Docker (Containerization):
-    - [ ] Dockerfile best practices
-    - [ ] Multi-stage builds
-    - [ ] Layer caching
-  - [ ] Kubernetes:
-    - [ ] Pod, Service, Deployment
-    - [ ] Ingress
-    - [ ] ConfigMaps, Secrets
-    - [ ] Horizontal Pod Autoscaler
-  - [ ] CI/CD Pipelines:
-    - [ ] GitHub Actions
-    - [ ] Jenkins
-  - [ ] Deployment strategies:
-    - [ ] Blue-Green
-    - [ ] Canary
-    - [ ] Rolling Update
-  - [ ] Quiz interattivo
+- [x] **Modulo 5: Cloud & DevOps**
+  - [x] Docker (Containerization):
+    - [x] Container vs VM (diagramma comparativo)
+    - [x] Dockerfile best practices
+    - [x] Multi-stage builds
+    - [x] Layer caching (diagramma cache invalidation)
+    - [x] Docker Compose per sviluppo locale
+  - [x] Kubernetes:
+    - [x] Architettura cluster (Control Plane, Worker Nodes)
+    - [x] Pod (resources, probes, env)
+    - [x] Deployment (rolling update strategy)
+    - [x] Service (ClusterIP, NodePort, LoadBalancer, ExternalName)
+    - [x] Ingress (TLS, routing rules)
+    - [x] ConfigMaps e Secrets
+    - [x] Horizontal Pod Autoscaler (HPA)
+  - [x] CI/CD Pipelines:
+    - [x] GitHub Actions (workflow completo con test, build, deploy)
+    - [x] Jenkins (Declarative Pipeline con Jenkinsfile)
+    - [x] Confronto GitHub Actions vs Jenkins
+  - [x] Deployment strategies:
+    - [x] Rolling Update (diagramma progressivo)
+    - [x] Blue-Green (diagramma switch, rollback istantaneo)
+    - [x] Canary (diagramma fasi, Argo Rollouts, AnalysisTemplate)
+    - [x] Tabella comparativa strategie
+  - [x] Quiz interattivo (5 domande, q21-q25)
 
 - [ ] **Modulo 6: Advanced Topics 2026**
   - [ ] Observability:
@@ -123,6 +130,6 @@
 ## Convenzioni Codice
 
 - ID sezioni: `modulo{N}-{topic}` (es: `modulo3-cap-theorem`)
-- ID quiz: `q{N}` progressivo globale (ultimo usato: q20)
+- ID quiz: `q{N}` progressivo globale (ultimo usato: q25)
 - Diagrammi: ASCII art dentro `<div class="diagram"><pre>...</pre></div>`
 - Info box: `<div class="info-box">`, `.info-box.warning`, `.info-box.success`

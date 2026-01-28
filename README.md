@@ -8,7 +8,7 @@ Requisiti di Contenuto:
 
 
 
-Lingua: Spiegazioni in italiano fluido; terminologia tecnica rigorosamente in inglese (es: High Availability, Throughput, Concurrency, Sharding, Late Binding).
+Lingua: Spiegazioni in italiano fluido; terminologia tecnica rigorosamente in inglese (es: High Availability, Throughput, Concurrency, Sharding, Late Binding). Spiegazioni ricche e dettagliate, non sintetiche. Grafici e tabelle solo dove servono, ma senza abbondare.
 
 
 
