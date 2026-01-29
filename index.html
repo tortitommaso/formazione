@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manuale Definitivo per Colloqui Tecnici 2026</title>
+    <title>Percorso di Formazione Tech 2026</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
     <style>
         :root {
@@ -476,8 +476,8 @@
         <!-- Sidebar Navigation -->
         <nav class="sidebar">
             <div class="sidebar-header">
-                <h1>Tech Interview 2026</h1>
-                <span>Manuale Definitivo</span>
+                <h1>Formazione Tech 2026</h1>
+                <span>Percorso di Approfondimento</span>
             </div>
 
             <div class="nav-section">
@@ -561,7 +561,9 @@
                 <a href="#modulo12-trees" class="nav-link nav-sublink">Trees & Tries</a>
                 <a href="#modulo12-graphs" class="nav-link nav-sublink">Graphs</a>
                 <a href="#modulo12-heaps" class="nav-link nav-sublink">Heaps & Priority Queue</a>
+                <a href="#modulo12-unionfind" class="nav-link nav-sublink">Union-Find</a>
                 <a href="#modulo12-quiz" class="nav-link nav-sublink">Quiz</a>
+                <a href="#modulo12-questions" class="nav-link nav-sublink">Domande</a>
             </div>
         </nav>
 
@@ -11173,6 +11175,1438 @@ public class OrderQueryHandler {
                 </div>
             </section>
 
+            <!-- ==================== MODULO 12: DATA STRUCTURES AVANZATE ==================== -->
+            <header class="module-header" id="modulo12">
+                <span class="module-tag">Modulo 12</span>
+                <h1>Data Structures Avanzate</h1>
+                <p>Trees, Graphs, Heaps, Union-Find: strutture dati fondamentali per coding interviews</p>
+            </header>
+
+            <!-- Trees & Tries Section -->
+            <section class="section" id="modulo12-trees">
+                <h2>Trees & Tries</h2>
+
+                <p>Gli alberi sono strutture dati gerarchiche fondamentali in computer science. Sono alla base di database (B-Tree), file system, compilatori (AST), e compaiono costantemente nelle coding interviews.</p>
+
+                <h3>Binary Search Tree (BST)</h3>
+
+                <p>Un <strong>Binary Search Tree</strong> è un albero binario dove ogni nodo rispetta l'invariante: tutti i valori nel sottoalbero sinistro sono <strong>minori</strong>, tutti nel sottoalbero destro sono <strong>maggiori</strong>. Questa proprietà permette ricerca, inserimento e cancellazione in O(h) dove h è l'altezza.</p>
+
+                <div class="diagram">
+                    <pre>
+        Binary Search Tree
+        ==================
+              8
+            /   \
+           3     10
+          / \      \
+         1   6      14
+            / \    /
+           4   7  13
+
+   Proprietà BST:
+   • Nodo 3: sottoalbero sx {1} < 3 < sottoalbero dx {4,6,7} ✓
+   • Nodo 8: sottoalbero sx {1,3,4,6,7} < 8 < sottoalbero dx {10,13,14} ✓
+   • In-order traversal produce: 1, 3, 4, 6, 7, 8, 10, 13, 14 (ordinato!)
+                    </pre>
+                </div>
+
+                <pre><code class="language-java">// Implementazione BST in Java
+class BST&lt;T extends Comparable&lt;T&gt;&gt; {
+    private Node root;
+
+    private class Node {
+        T value;
+        Node left, right;
+        Node(T value) { this.value = value; }
+    }
+
+    // Inserimento: O(h) - h = altezza dell'albero
+    public void insert(T value) {
+        root = insertRec(root, value);
+    }
+
+    private Node insertRec(Node node, T value) {
+        if (node == null) return new Node(value);
+
+        int cmp = value.compareTo(node.value);
+        if (cmp < 0)      node.left = insertRec(node.left, value);
+        else if (cmp > 0) node.right = insertRec(node.right, value);
+        // Se cmp == 0: duplicato, ignora (o gestisci come preferisci)
+
+        return node;
+    }
+
+    // Ricerca: O(h)
+    public boolean search(T value) {
+        Node current = root;
+        while (current != null) {
+            int cmp = value.compareTo(current.value);
+            if (cmp == 0)      return true;
+            else if (cmp < 0)  current = current.left;
+            else               current = current.right;
+        }
+        return false;
+    }
+
+    // Cancellazione: O(h) - il caso più complesso
+    public void delete(T value) {
+        root = deleteRec(root, value);
+    }
+
+    private Node deleteRec(Node node, T value) {
+        if (node == null) return null;
+
+        int cmp = value.compareTo(node.value);
+        if (cmp < 0)      node.left = deleteRec(node.left, value);
+        else if (cmp > 0) node.right = deleteRec(node.right, value);
+        else {
+            // Caso 1: nodo foglia → rimuovi
+            // Caso 2: un solo figlio → sostituisci con il figlio
+            if (node.left == null)  return node.right;
+            if (node.right == null) return node.left;
+
+            // Caso 3: due figli → trova successore in-order (minimo del sottoalbero dx)
+            Node successor = findMin(node.right);
+            node.value = successor.value;
+            node.right = deleteRec(node.right, successor.value);
+        }
+        return node;
+    }
+
+    private Node findMin(Node node) {
+        while (node.left != null) node = node.left;
+        return node;
+    }
+
+    // In-order traversal: produce elementi ordinati
+    public void inOrder(Consumer&lt;T&gt; action) {
+        inOrderRec(root, action);
+    }
+
+    private void inOrderRec(Node node, Consumer&lt;T&gt; action) {
+        if (node == null) return;
+        inOrderRec(node.left, action);
+        action.accept(node.value);
+        inOrderRec(node.right, action);
+    }
+}</code></pre>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Operazione</th>
+                            <th>Caso medio</th>
+                            <th>Caso peggiore (sbilanciato)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Search</td>
+                            <td>O(log n)</td>
+                            <td>O(n)</td>
+                        </tr>
+                        <tr>
+                            <td>Insert</td>
+                            <td>O(log n)</td>
+                            <td>O(n)</td>
+                        </tr>
+                        <tr>
+                            <td>Delete</td>
+                            <td>O(log n)</td>
+                            <td>O(n)</td>
+                        </tr>
+                        <tr>
+                            <td>In-order traversal</td>
+                            <td colspan="2">O(n) sempre</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="info-box warning">
+                    <strong>Attenzione al caso degenerato:</strong> Se inserisci elementi già ordinati (1, 2, 3, 4, 5...), il BST degenera in una lista linkata e tutte le operazioni diventano O(n). Per questo esistono gli alberi bilanciati.
+                </div>
+
+                <h3>Alberi Bilanciati: AVL e Red-Black Tree</h3>
+
+                <p>Gli alberi bilanciati risolvono il problema del caso degenerato garantendo che l'altezza resti O(log n). Non devi implementarli nelle interview, ma devi conoscerne i principi.</p>
+
+                <div class="diagram">
+                    <pre>
+   BST Degenerato vs AVL Bilanciato (stessi dati: 1,2,3,4,5)
+
+   BST (inserimento ordinato)      AVL (auto-bilanciato)
+         1                              2
+          \                            / \
+           2                          1   4
+            \                            / \
+             3                          3   5
+              \
+               4                   h = 2 (log₂5 ≈ 2.3)
+                \
+                 5
+
+         h = 4 (= n-1)
+                    </pre>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Proprietà</th>
+                            <th>AVL Tree</th>
+                            <th>Red-Black Tree</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Bilanciamento</strong></td>
+                            <td>Stretto: |h(sx) - h(dx)| ≤ 1</td>
+                            <td>Rilassato: cammino più lungo ≤ 2× più corto</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Search</strong></td>
+                            <td>Leggermente più veloce (albero più basso)</td>
+                            <td>Leggermente più lento</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Insert/Delete</strong></td>
+                            <td>Più rotazioni (fino a O(log n))</td>
+                            <td>Meno rotazioni (max 2-3)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Uso tipico</strong></td>
+                            <td>Database, lookup-heavy</td>
+                            <td>Java TreeMap/TreeSet, Linux kernel</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Garanzia</strong></td>
+                            <td>h ≤ 1.44 × log₂(n)</td>
+                            <td>h ≤ 2 × log₂(n+1)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="info-box">
+                    <strong>Nelle interview:</strong> Non ti chiederanno di implementare un AVL o Red-Black da zero. Ma devi sapere che Java <code>TreeMap</code> e <code>TreeSet</code> usano Red-Black Tree internamente, garantendo O(log n) per get/put/remove. Quando scegliere TreeMap vs HashMap: quando ti serve l'<strong>ordinamento</strong> delle chiavi.
+                </div>
+
+                <h3>Trie (Prefix Tree)</h3>
+
+                <p>Un <strong>Trie</strong> è un albero specializzato per gestire stringhe. Ogni nodo rappresenta un carattere, e i percorsi dalla radice alle foglie formano le parole. È la struttura ideale per <strong>autocomplete</strong>, <strong>spell checking</strong>, e <strong>prefix matching</strong>.</p>
+
+                <div class="diagram">
+                    <pre>
+   Trie con parole: "app", "apple", "api", "bat", "ball"
+
+                     root
+                    /    \
+                   a      b
+                   |      |
+                   p      a
+                  / \     |  \
+                 p   i*   t*  l
+                 |            |
+                 l            l*
+                 |
+                 e*
+
+   * = fine di una parola valida
+
+   Ricerca "api": root → a → p → i → trovato! ✓
+   Ricerca "ap":  root → a → p → NON è fine parola ✗
+   Prefisso "ap": root → a → p → {app, apple, api} tutti i sotto-nodi
+                    </pre>
+                </div>
+
+                <pre><code class="language-java">// Implementazione Trie in Java
+class Trie {
+    private static final int ALPHABET_SIZE = 26; // solo lettere minuscole
+
+    private class TrieNode {
+        TrieNode[] children = new TrieNode[ALPHABET_SIZE];
+        boolean isEndOfWord = false;
+    }
+
+    private final TrieNode root = new TrieNode();
+
+    // Inserimento: O(m) dove m = lunghezza della parola
+    public void insert(String word) {
+        TrieNode current = root;
+        for (char c : word.toCharArray()) {
+            int index = c - 'a';
+            if (current.children[index] == null) {
+                current.children[index] = new TrieNode();
+            }
+            current = current.children[index];
+        }
+        current.isEndOfWord = true;
+    }
+
+    // Ricerca esatta: O(m)
+    public boolean search(String word) {
+        TrieNode node = findNode(word);
+        return node != null && node.isEndOfWord;
+    }
+
+    // Ricerca prefisso: O(m)
+    public boolean startsWith(String prefix) {
+        return findNode(prefix) != null;
+    }
+
+    private TrieNode findNode(String prefix) {
+        TrieNode current = root;
+        for (char c : prefix.toCharArray()) {
+            int index = c - 'a';
+            if (current.children[index] == null) return null;
+            current = current.children[index];
+        }
+        return current;
+    }
+
+    // Autocomplete: trova tutte le parole con un dato prefisso
+    public List&lt;String&gt; autocomplete(String prefix) {
+        List&lt;String&gt; results = new ArrayList&lt;&gt;();
+        TrieNode node = findNode(prefix);
+        if (node != null) {
+            collectWords(node, new StringBuilder(prefix), results);
+        }
+        return results;
+    }
+
+    private void collectWords(TrieNode node, StringBuilder sb, List&lt;String&gt; results) {
+        if (node.isEndOfWord) results.add(sb.toString());
+        for (int i = 0; i < ALPHABET_SIZE; i++) {
+            if (node.children[i] != null) {
+                sb.append((char) ('a' + i));
+                collectWords(node.children[i], sb, results);
+                sb.deleteCharAt(sb.length() - 1); // backtrack
+            }
+        }
+    }
+}
+
+// Uso:
+Trie trie = new Trie();
+trie.insert("apple");
+trie.insert("app");
+trie.insert("api");
+trie.search("app");        // true
+trie.search("ap");         // false (non è fine parola)
+trie.startsWith("ap");     // true
+trie.autocomplete("ap");   // ["api", "app", "apple"]</code></pre>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Operazione</th>
+                            <th>Trie</th>
+                            <th>HashMap</th>
+                            <th>Sorted Array</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Search esatta</td>
+                            <td>O(m)</td>
+                            <td>O(m) average</td>
+                            <td>O(m log n)</td>
+                        </tr>
+                        <tr>
+                            <td>Prefix search</td>
+                            <td><strong>O(p + k)</strong></td>
+                            <td>O(n × m)</td>
+                            <td>O(m log n + k)</td>
+                        </tr>
+                        <tr>
+                            <td>Insert</td>
+                            <td>O(m)</td>
+                            <td>O(m) average</td>
+                            <td>O(n)</td>
+                        </tr>
+                        <tr>
+                            <td>Spazio</td>
+                            <td>O(ALPHABET × n × m)</td>
+                            <td>O(n × m)</td>
+                            <td>O(n × m)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p><em>m = lunghezza stringa, n = numero di parole, p = lunghezza prefisso, k = numero risultati</em></p>
+            </section>
+
+            <!-- Graphs Section -->
+            <section class="section" id="modulo12-graphs">
+                <h2>Graphs</h2>
+
+                <p>I grafi sono la struttura dati più generale: modellano relazioni tra entità. Social networks, mappe stradali, dependency resolution, web crawling - tutti problemi di grafi. Nelle interview, BFS e DFS sono fondamentali.</p>
+
+                <h3>Rappresentazioni: Adjacency List vs Matrix</h3>
+
+                <div class="diagram">
+                    <pre>
+   Grafo esempio (non diretto):
+
+        0 --- 1
+        |   / |
+        |  /  |
+        | /   |
+        2 --- 3
+
+   Adjacency List:               Adjacency Matrix:
+   0: [1, 2]                        0  1  2  3
+   1: [0, 2, 3]                  0 [0, 1, 1, 0]
+   2: [0, 1, 3]                  1 [1, 0, 1, 1]
+   3: [1, 2]                     2 [1, 1, 0, 1]
+                                 3 [0, 1, 1, 0]
+                    </pre>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Criterio</th>
+                            <th>Adjacency List</th>
+                            <th>Adjacency Matrix</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Spazio</strong></td>
+                            <td>O(V + E)</td>
+                            <td>O(V²)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Verifica arco (u,v)</strong></td>
+                            <td>O(degree(u))</td>
+                            <td><strong>O(1)</strong></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Iterare vicini di u</strong></td>
+                            <td><strong>O(degree(u))</strong></td>
+                            <td>O(V)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Aggiungere arco</strong></td>
+                            <td>O(1)</td>
+                            <td>O(1)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Quando usare</strong></td>
+                            <td>Grafi sparsi (E << V²)</td>
+                            <td>Grafi densi (E ≈ V²)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <pre><code class="language-java">// Rappresentazione con Adjacency List (la più usata nelle interview)
+class Graph {
+    private final int vertices;
+    private final List&lt;List&lt;Integer&gt;&gt; adjList;
+
+    public Graph(int vertices) {
+        this.vertices = vertices;
+        this.adjList = new ArrayList&lt;&gt;();
+        for (int i = 0; i < vertices; i++) {
+            adjList.add(new ArrayList&lt;&gt;());
+        }
+    }
+
+    // Grafo non diretto: aggiungi arco in entrambe le direzioni
+    public void addEdge(int u, int v) {
+        adjList.get(u).add(v);
+        adjList.get(v).add(u);
+    }
+
+    // Per grafo diretto: solo una direzione
+    public void addDirectedEdge(int from, int to) {
+        adjList.get(from).add(to);
+    }
+
+    public List&lt;Integer&gt; neighbors(int v) {
+        return adjList.get(v);
+    }
+}</code></pre>
+
+                <h3>BFS (Breadth-First Search)</h3>
+
+                <p><strong>BFS</strong> esplora il grafo "per livelli": prima tutti i nodi a distanza 1, poi distanza 2, ecc. Usa una <strong>Queue</strong> (FIFO). È l'algoritmo ideale per trovare il <strong>shortest path in grafi non pesati</strong>.</p>
+
+                <div class="diagram">
+                    <pre>
+   BFS dal nodo 0:
+
+        0 --- 1 --- 4
+        |     |
+        2 --- 3
+        |
+        5
+
+   Ordine di visita: 0 → 1, 2 → 3, 4, 5
+                     (livello 0) (livello 1) (livello 2)
+
+   Queue: [0] → [1,2] → [2,3,4] → [3,4,5] → [4,5] → [5] → []
+                    </pre>
+                </div>
+
+                <pre><code class="language-java">// BFS: O(V + E) tempo, O(V) spazio
+public List&lt;Integer&gt; bfs(Graph graph, int start) {
+    List&lt;Integer&gt; order = new ArrayList&lt;&gt;();
+    boolean[] visited = new boolean[graph.vertices()];
+    Queue&lt;Integer&gt; queue = new LinkedList&lt;&gt;();
+
+    visited[start] = true;
+    queue.offer(start);
+
+    while (!queue.isEmpty()) {
+        int node = queue.poll();
+        order.add(node);
+
+        for (int neighbor : graph.neighbors(node)) {
+            if (!visited[neighbor]) {
+                visited[neighbor] = true;
+                queue.offer(neighbor);
+            }
+        }
+    }
+    return order;
+}
+
+// BFS per shortest path (grafo non pesato)
+public int shortestPath(Graph graph, int start, int end) {
+    if (start == end) return 0;
+
+    boolean[] visited = new boolean[graph.vertices()];
+    Queue&lt;int[]&gt; queue = new LinkedList&lt;&gt;(); // [nodo, distanza]
+
+    visited[start] = true;
+    queue.offer(new int[]{start, 0});
+
+    while (!queue.isEmpty()) {
+        int[] current = queue.poll();
+        int node = current[0], dist = current[1];
+
+        for (int neighbor : graph.neighbors(node)) {
+            if (neighbor == end) return dist + 1;
+            if (!visited[neighbor]) {
+                visited[neighbor] = true;
+                queue.offer(new int[]{neighbor, dist + 1});
+            }
+        }
+    }
+    return -1; // non raggiungibile
+}
+
+// BFS su griglia (pattern molto comune nelle interview)
+public int shortestPathGrid(int[][] grid) {
+    int rows = grid.length, cols = grid[0].length;
+    if (grid[0][0] == 1 || grid[rows-1][cols-1] == 1) return -1;
+
+    int[][] directions = {{0,1}, {0,-1}, {1,0}, {-1,0}};
+    boolean[][] visited = new boolean[rows][cols];
+    Queue&lt;int[]&gt; queue = new LinkedList&lt;&gt;();
+
+    visited[0][0] = true;
+    queue.offer(new int[]{0, 0, 1}); // row, col, distance
+
+    while (!queue.isEmpty()) {
+        int[] curr = queue.poll();
+        int r = curr[0], c = curr[1], dist = curr[2];
+
+        if (r == rows-1 && c == cols-1) return dist;
+
+        for (int[] dir : directions) {
+            int nr = r + dir[0], nc = c + dir[1];
+            if (nr >= 0 && nr < rows && nc >= 0 && nc < cols
+                    && !visited[nr][nc] && grid[nr][nc] == 0) {
+                visited[nr][nc] = true;
+                queue.offer(new int[]{nr, nc, dist + 1});
+            }
+        }
+    }
+    return -1;
+}</code></pre>
+
+                <h3>DFS (Depth-First Search)</h3>
+
+                <p><strong>DFS</strong> esplora il grafo "in profondità": segue un percorso fino in fondo prima di tornare indietro (backtracking). Usa uno <strong>Stack</strong> (o la ricorsione). È l'algoritmo ideale per <strong>cycle detection</strong>, <strong>topological sort</strong>, e <strong>connected components</strong>.</p>
+
+                <div class="diagram">
+                    <pre>
+   DFS dal nodo 0 (scelta: nodo più piccolo prima):
+
+        0 --- 1 --- 4
+        |     |
+        2 --- 3
+        |
+        5
+
+   Ordine di visita: 0 → 1 → 3 → 2 → 5 → (backtrack) → 4
+
+   Stack ricorsivo: 0 → 0,1 → 0,1,3 → 0,1,3,2 → 0,1,3,2,5
+                    → 0,1,3,2 → 0,1,3 → 0,1 → 0,1,4 → 0,1 → 0
+                    </pre>
+                </div>
+
+                <pre><code class="language-java">// DFS Ricorsivo: O(V + E) tempo, O(V) spazio (stack ricorsivo)
+public void dfsRecursive(Graph graph, int start) {
+    boolean[] visited = new boolean[graph.vertices()];
+    dfsHelper(graph, start, visited);
+}
+
+private void dfsHelper(Graph graph, int node, boolean[] visited) {
+    visited[node] = true;
+    System.out.print(node + " ");
+
+    for (int neighbor : graph.neighbors(node)) {
+        if (!visited[neighbor]) {
+            dfsHelper(graph, neighbor, visited);
+        }
+    }
+}
+
+// DFS Iterativo (con Stack esplicito)
+public List&lt;Integer&gt; dfsIterative(Graph graph, int start) {
+    List&lt;Integer&gt; order = new ArrayList&lt;&gt;();
+    boolean[] visited = new boolean[graph.vertices()];
+    Deque&lt;Integer&gt; stack = new ArrayDeque&lt;&gt;();
+
+    stack.push(start);
+    while (!stack.isEmpty()) {
+        int node = stack.pop();
+        if (visited[node]) continue;
+        visited[node] = true;
+        order.add(node);
+
+        // Aggiungi vicini in ordine inverso per visitare in ordine naturale
+        List&lt;Integer&gt; neighbors = graph.neighbors(node);
+        for (int i = neighbors.size() - 1; i >= 0; i--) {
+            if (!visited[neighbors.get(i)]) {
+                stack.push(neighbors.get(i));
+            }
+        }
+    }
+    return order;
+}
+
+// Cycle Detection in grafo diretto (DFS con 3 colori)
+public boolean hasCycle(int vertices, List&lt;List&lt;Integer&gt;&gt; adjList) {
+    int[] color = new int[vertices]; // 0=white, 1=gray, 2=black
+
+    for (int i = 0; i < vertices; i++) {
+        if (color[i] == 0 && dfsCycle(i, adjList, color)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+private boolean dfsCycle(int node, List&lt;List&lt;Integer&gt;&gt; adj, int[] color) {
+    color[node] = 1; // gray: in corso di visita
+
+    for (int neighbor : adj.get(node)) {
+        if (color[neighbor] == 1) return true;  // back edge → ciclo!
+        if (color[neighbor] == 0 && dfsCycle(neighbor, adj, color)) return true;
+    }
+
+    color[node] = 2; // black: completato
+    return false;
+}</code></pre>
+
+                <h3>Dijkstra: Shortest Path in Grafi Pesati</h3>
+
+                <p>L'algoritmo di <strong>Dijkstra</strong> trova il cammino più breve da un nodo sorgente a tutti gli altri in un grafo con pesi <strong>non negativi</strong>. Usa una <strong>Priority Queue</strong> (Min-Heap) per selezionare sempre il nodo con distanza minima.</p>
+
+                <div class="diagram">
+                    <pre>
+   Grafo pesato:
+                2
+        A ──────── B
+        |          |
+      4 |          | 1
+        |    1     |
+        C ──────── D
+         \        /
+        5 \      / 3
+           \    /
+             E
+
+   Dijkstra da A:
+   Passo 1: dist[A]=0, visita A → aggiorna B(2), C(4)
+   Passo 2: dist[B]=2, visita B → aggiorna D(2+1=3)
+   Passo 3: dist[D]=3, visita D → aggiorna E(3+3=6)
+   Passo 4: dist[C]=4, visita C → aggiorna D(4+1=5, no: 3<5), E(4+5=9, no: 6<9)
+   Passo 5: dist[E]=6, visita E → fine
+
+   Risultato: A→A=0, A→B=2, A→D=3, A→C=4, A→E=6
+                    </pre>
+                </div>
+
+                <pre><code class="language-java">// Dijkstra: O((V + E) log V) con Priority Queue
+public int[] dijkstra(int vertices, List&lt;List&lt;int[]&gt;&gt; adjList, int source) {
+    // adjList.get(u) contiene int[]{v, weight}
+    int[] dist = new int[vertices];
+    Arrays.fill(dist, Integer.MAX_VALUE);
+    dist[source] = 0;
+
+    // Min-Heap: [distanza, nodo]
+    PriorityQueue&lt;int[]&gt; pq = new PriorityQueue&lt;&gt;(
+        Comparator.comparingInt(a -> a[0])
+    );
+    pq.offer(new int[]{0, source});
+
+    boolean[] visited = new boolean[vertices];
+
+    while (!pq.isEmpty()) {
+        int[] current = pq.poll();
+        int d = current[0], u = current[1];
+
+        if (visited[u]) continue; // nodo già processato
+        visited[u] = true;
+
+        for (int[] edge : adjList.get(u)) {
+            int v = edge[0], weight = edge[1];
+            if (dist[u] + weight < dist[v]) {
+                dist[v] = dist[u] + weight;
+                pq.offer(new int[]{dist[v], v});
+            }
+        }
+    }
+    return dist; // dist[i] = distanza minima da source a i
+}
+
+// Esempio di utilizzo:
+// Costruisci grafo
+List&lt;List&lt;int[]&gt;&gt; graph = new ArrayList&lt;&gt;();
+for (int i = 0; i < 5; i++) graph.add(new ArrayList&lt;&gt;());
+graph.get(0).add(new int[]{1, 2}); // A→B peso 2
+graph.get(0).add(new int[]{2, 4}); // A→C peso 4
+graph.get(1).add(new int[]{3, 1}); // B→D peso 1
+graph.get(2).add(new int[]{3, 1}); // C→D peso 1
+graph.get(2).add(new int[]{4, 5}); // C→E peso 5
+graph.get(3).add(new int[]{4, 3}); // D→E peso 3
+
+int[] distances = dijkstra(5, graph, 0);
+// distances = [0, 2, 4, 3, 6]</code></pre>
+
+                <div class="info-box warning">
+                    <strong>Dijkstra NON funziona con pesi negativi.</strong> Per pesi negativi (senza cicli negativi), usa Bellman-Ford: O(V × E). Per grafi con cicli negativi, non esiste shortest path finito.
+                </div>
+
+                <h3>Topological Sort</h3>
+
+                <p>Il <strong>Topological Sort</strong> ordina i nodi di un DAG (Directed Acyclic Graph) tale che per ogni arco (u, v), u viene prima di v. Applicazioni: build systems, course scheduling, dependency resolution.</p>
+
+                <pre><code class="language-java">// Topological Sort con DFS: O(V + E)
+public List&lt;Integer&gt; topologicalSort(int vertices, List&lt;List&lt;Integer&gt;&gt; adjList) {
+    boolean[] visited = new boolean[vertices];
+    Deque&lt;Integer&gt; stack = new ArrayDeque&lt;&gt;();
+
+    for (int i = 0; i < vertices; i++) {
+        if (!visited[i]) {
+            topoHelper(i, adjList, visited, stack);
+        }
+    }
+
+    // Lo stack contiene l'ordine topologico (inverso del post-order DFS)
+    List&lt;Integer&gt; result = new ArrayList&lt;&gt;();
+    while (!stack.isEmpty()) {
+        result.add(stack.pop());
+    }
+    return result;
+}
+
+private void topoHelper(int node, List&lt;List&lt;Integer&gt;&gt; adj,
+                         boolean[] visited, Deque&lt;Integer&gt; stack) {
+    visited[node] = true;
+    for (int neighbor : adj.get(node)) {
+        if (!visited[neighbor]) {
+            topoHelper(neighbor, adj, visited, stack);
+        }
+    }
+    stack.push(node); // aggiungi DOPO aver visitato tutti i vicini (post-order)
+}
+
+// Topological Sort con Kahn's Algorithm (BFS + in-degree): O(V + E)
+public List&lt;Integer&gt; kahnTopologicalSort(int vertices, List&lt;List&lt;Integer&gt;&gt; adjList) {
+    int[] inDegree = new int[vertices];
+    for (List&lt;Integer&gt; neighbors : adjList) {
+        for (int n : neighbors) inDegree[n]++;
+    }
+
+    Queue&lt;Integer&gt; queue = new LinkedList&lt;&gt;();
+    for (int i = 0; i < vertices; i++) {
+        if (inDegree[i] == 0) queue.offer(i); // nodi senza dipendenze
+    }
+
+    List&lt;Integer&gt; result = new ArrayList&lt;&gt;();
+    while (!queue.isEmpty()) {
+        int node = queue.poll();
+        result.add(node);
+        for (int neighbor : adjList.get(node)) {
+            if (--inDegree[neighbor] == 0) {
+                queue.offer(neighbor);
+            }
+        }
+    }
+
+    // Se result.size() != vertices → il grafo ha un ciclo (non è DAG)
+    if (result.size() != vertices) {
+        throw new IllegalStateException("Il grafo contiene un ciclo!");
+    }
+    return result;
+}</code></pre>
+
+                <div class="info-box">
+                    <strong>BFS vs DFS - Quando usare cosa:</strong>
+                    <br>• <strong>BFS</strong>: shortest path (non pesato), level-order traversal, "nearest" problems
+                    <br>• <strong>DFS</strong>: cycle detection, topological sort, connected components, path existence, backtracking
+                    <br>• <strong>Dijkstra</strong>: shortest path in grafi pesati (pesi ≥ 0)
+                </div>
+            </section>
+
+            <!-- Heaps & Priority Queue Section -->
+            <section class="section" id="modulo12-heaps">
+                <h2>Heaps & Priority Queue</h2>
+
+                <p>Un <strong>Heap</strong> è un albero binario completo che soddisfa la <strong>proprietà heap</strong>: in un Min-Heap, ogni nodo è minore o uguale ai suoi figli. In un Max-Heap, maggiore o uguale. L'heap è alla base di <strong>Priority Queue</strong>, Dijkstra, e molti problemi "top-K".</p>
+
+                <h3>Min-Heap e Max-Heap</h3>
+
+                <div class="diagram">
+                    <pre>
+   Min-Heap                    Max-Heap
+       1                          9
+      / \                        / \
+     3   5                      7   8
+    / \ /                      / \ /
+   7  4 8                     3  5 2
+
+   Proprietà Min-Heap:         Proprietà Max-Heap:
+   padre ≤ figli               padre ≥ figli
+   root = minimo               root = massimo
+
+   Rappresentazione Array (Min-Heap):
+   Index:  [0] [1] [2] [3] [4] [5]
+   Value:   1   3   5   7   4   8
+
+   Per indice i:
+   • Padre:       (i - 1) / 2
+   • Figlio sx:   2 * i + 1
+   • Figlio dx:   2 * i + 2
+                    </pre>
+                </div>
+
+                <pre><code class="language-java">// Min-Heap implementazione manuale
+class MinHeap {
+    private int[] heap;
+    private int size;
+
+    public MinHeap(int capacity) {
+        heap = new int[capacity];
+        size = 0;
+    }
+
+    // Insert: O(log n) - aggiungi in fondo, bubble up
+    public void insert(int value) {
+        heap[size] = value;
+        bubbleUp(size);
+        size++;
+    }
+
+    // Extract Min: O(log n) - rimuovi root, metti ultimo in cima, bubble down
+    public int extractMin() {
+        int min = heap[0];
+        heap[0] = heap[--size];
+        bubbleDown(0);
+        return min;
+    }
+
+    // Peek: O(1)
+    public int peek() {
+        return heap[0];
+    }
+
+    private void bubbleUp(int index) {
+        while (index > 0) {
+            int parent = (index - 1) / 2;
+            if (heap[index] >= heap[parent]) break;
+            swap(index, parent);
+            index = parent;
+        }
+    }
+
+    private void bubbleDown(int index) {
+        while (2 * index + 1 < size) {
+            int left = 2 * index + 1;
+            int right = 2 * index + 2;
+            int smallest = left;
+
+            if (right < size && heap[right] < heap[left]) {
+                smallest = right;
+            }
+            if (heap[index] <= heap[smallest]) break;
+
+            swap(index, smallest);
+            index = smallest;
+        }
+    }
+
+    private void swap(int i, int j) {
+        int temp = heap[i];
+        heap[i] = heap[j];
+        heap[j] = temp;
+    }
+}</code></pre>
+
+                <h3>Java PriorityQueue</h3>
+
+                <p>In Java, <code>PriorityQueue</code> è un Min-Heap. Per un Max-Heap, usa <code>Collections.reverseOrder()</code> o un comparatore custom.</p>
+
+                <pre><code class="language-java">// Min-Heap (default)
+PriorityQueue&lt;Integer&gt; minHeap = new PriorityQueue&lt;&gt;();
+minHeap.offer(5);
+minHeap.offer(1);
+minHeap.offer(3);
+minHeap.poll();  // → 1 (minimo)
+minHeap.peek();  // → 3
+
+// Max-Heap
+PriorityQueue&lt;Integer&gt; maxHeap = new PriorityQueue&lt;&gt;(Collections.reverseOrder());
+maxHeap.offer(5);
+maxHeap.offer(1);
+maxHeap.offer(3);
+maxHeap.poll();  // → 5 (massimo)
+
+// PQ con oggetti custom (es: distanza minima per Dijkstra)
+PriorityQueue&lt;int[]&gt; pq = new PriorityQueue&lt;&gt;(
+    Comparator.comparingInt(a -> a[1]) // ordina per secondo elemento
+);
+
+// Pattern comune: "Top K elements"
+// Trova i K elementi più grandi da un array
+public int[] topK(int[] nums, int k) {
+    // Min-Heap di dimensione k: mantieni i k più grandi
+    PriorityQueue&lt;Integer&gt; minHeap = new PriorityQueue&lt;&gt;();
+    for (int num : nums) {
+        minHeap.offer(num);
+        if (minHeap.size() > k) {
+            minHeap.poll(); // rimuovi il più piccolo
+        }
+    }
+    return minHeap.stream().mapToInt(Integer::intValue).toArray();
+}
+
+// Kth Largest Element: O(n log k)
+public int findKthLargest(int[] nums, int k) {
+    PriorityQueue&lt;Integer&gt; minHeap = new PriorityQueue&lt;&gt;();
+    for (int num : nums) {
+        minHeap.offer(num);
+        if (minHeap.size() > k) minHeap.poll();
+    }
+    return minHeap.peek(); // il più piccolo dei k più grandi = il k-esimo
+}
+
+// Merge K Sorted Lists: O(n log k) dove n = totale elementi, k = numero liste
+public List&lt;Integer&gt; mergeKSorted(List&lt;List&lt;Integer&gt;&gt; lists) {
+    // PQ contiene: [valore, indice_lista, indice_elemento]
+    PriorityQueue&lt;int[]&gt; pq = new PriorityQueue&lt;&gt;(
+        Comparator.comparingInt(a -> a[0])
+    );
+
+    // Inserisci il primo elemento di ogni lista
+    for (int i = 0; i < lists.size(); i++) {
+        if (!lists.get(i).isEmpty()) {
+            pq.offer(new int[]{lists.get(i).get(0), i, 0});
+        }
+    }
+
+    List&lt;Integer&gt; result = new ArrayList&lt;&gt;();
+    while (!pq.isEmpty()) {
+        int[] curr = pq.poll();
+        result.add(curr[0]);
+
+        int listIdx = curr[1], elemIdx = curr[2];
+        if (elemIdx + 1 < lists.get(listIdx).size()) {
+            pq.offer(new int[]{lists.get(listIdx).get(elemIdx + 1), listIdx, elemIdx + 1});
+        }
+    }
+    return result;
+}</code></pre>
+
+                <h3>Heap Sort</h3>
+
+                <p><strong>Heap Sort</strong> ordina un array in-place usando un Max-Heap. Complessità: O(n log n) sempre, spazio O(1). Non è stabile (a differenza di Merge Sort).</p>
+
+                <pre><code class="language-java">// Heap Sort: O(n log n) tempo, O(1) spazio
+public void heapSort(int[] arr) {
+    int n = arr.length;
+
+    // Fase 1: Build Max-Heap (bottom-up) - O(n)
+    for (int i = n / 2 - 1; i >= 0; i--) {
+        heapify(arr, n, i);
+    }
+
+    // Fase 2: Extract max ripetutamente - O(n log n)
+    for (int i = n - 1; i > 0; i--) {
+        // Sposta il massimo (root) alla fine
+        int temp = arr[0];
+        arr[0] = arr[i];
+        arr[i] = temp;
+
+        // Ripristina proprietà heap sulla porzione ridotta
+        heapify(arr, i, 0);
+    }
+}
+
+private void heapify(int[] arr, int heapSize, int root) {
+    int largest = root;
+    int left = 2 * root + 1;
+    int right = 2 * root + 2;
+
+    if (left < heapSize && arr[left] > arr[largest])   largest = left;
+    if (right < heapSize && arr[right] > arr[largest])  largest = right;
+
+    if (largest != root) {
+        int temp = arr[root];
+        arr[root] = arr[largest];
+        arr[largest] = temp;
+        heapify(arr, heapSize, largest);
+    }
+}</code></pre>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Operazione Heap</th>
+                            <th>Complessità</th>
+                            <th>Note</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Insert</td>
+                            <td>O(log n)</td>
+                            <td>Bubble up</td>
+                        </tr>
+                        <tr>
+                            <td>Extract Min/Max</td>
+                            <td>O(log n)</td>
+                            <td>Bubble down</td>
+                        </tr>
+                        <tr>
+                            <td>Peek</td>
+                            <td>O(1)</td>
+                            <td>Root dell'heap</td>
+                        </tr>
+                        <tr>
+                            <td>Build Heap</td>
+                            <td>O(n)</td>
+                            <td>Bottom-up heapify (non O(n log n)!)</td>
+                        </tr>
+                        <tr>
+                            <td>Heap Sort</td>
+                            <td>O(n log n)</td>
+                            <td>Build + n extract</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Union-Find Section -->
+            <section class="section" id="modulo12-unionfind">
+                <h2>Union-Find (Disjoint Set)</h2>
+
+                <p><strong>Union-Find</strong> (o Disjoint Set Union, DSU) è una struttura dati che gestisce una collezione di insiemi disgiunti. Supporta due operazioni principali: <strong>find</strong> (a quale insieme appartiene un elemento?) e <strong>union</strong> (unisci due insiemi). È fondamentale per <strong>Kruskal's MST</strong>, <strong>connected components</strong>, e problemi di <strong>equivalence classes</strong>.</p>
+
+                <div class="diagram">
+                    <pre>
+   Union-Find - Evoluzione degli insiemi:
+
+   Stato iniziale: {0} {1} {2} {3} {4} {5}
+
+   union(0, 1):    {0, 1} {2} {3} {4} {5}
+   union(2, 3):    {0, 1} {2, 3} {4} {5}
+   union(0, 2):    {0, 1, 2, 3} {4} {5}
+   union(4, 5):    {0, 1, 2, 3} {4, 5}
+
+   find(1) == find(3)?  → Sì (stesso insieme)
+   find(1) == find(4)?  → No (insiemi diversi)
+
+   Rappresentazione ad albero (con path compression):
+
+   Senza compression:     Con path compression (dopo find):
+        0                      0
+       / \                   / | \ \
+      1   2                 1  2  3  (tutti puntano alla root)
+          |
+          3
+                    </pre>
+                </div>
+
+                <pre><code class="language-java">// Union-Find con Path Compression e Union by Rank
+class UnionFind {
+    private int[] parent;
+    private int[] rank;
+    private int components; // numero di componenti connesse
+
+    public UnionFind(int n) {
+        parent = new int[n];
+        rank = new int[n];
+        components = n;
+        for (int i = 0; i < n; i++) {
+            parent[i] = i; // ogni elemento è il proprio parent
+            rank[i] = 0;
+        }
+    }
+
+    // Find con Path Compression: O(α(n)) ammortizzato ≈ O(1)
+    // Appiattisce l'albero durante la ricerca
+    public int find(int x) {
+        if (parent[x] != x) {
+            parent[x] = find(parent[x]); // path compression
+        }
+        return parent[x];
+    }
+
+    // Union by Rank: O(α(n)) ammortizzato ≈ O(1)
+    // Attacca l'albero più basso sotto quello più alto
+    public boolean union(int x, int y) {
+        int rootX = find(x);
+        int rootY = find(y);
+
+        if (rootX == rootY) return false; // già nello stesso insieme
+
+        // Union by rank: l'albero più basso va sotto quello più alto
+        if (rank[rootX] < rank[rootY]) {
+            parent[rootX] = rootY;
+        } else if (rank[rootX] > rank[rootY]) {
+            parent[rootY] = rootX;
+        } else {
+            parent[rootY] = rootX;
+            rank[rootX]++;
+        }
+
+        components--;
+        return true;
+    }
+
+    public boolean connected(int x, int y) {
+        return find(x) == find(y);
+    }
+
+    public int getComponents() {
+        return components;
+    }
+}
+
+// Esempio: Numero di componenti connesse in un grafo
+public int countConnectedComponents(int n, int[][] edges) {
+    UnionFind uf = new UnionFind(n);
+    for (int[] edge : edges) {
+        uf.union(edge[0], edge[1]);
+    }
+    return uf.getComponents();
+}
+
+// Esempio: Cycle detection in grafo non diretto
+public boolean hasCycleUndirected(int n, int[][] edges) {
+    UnionFind uf = new UnionFind(n);
+    for (int[] edge : edges) {
+        // Se due nodi sono già connessi e aggiungiamo un arco → ciclo
+        if (!uf.union(edge[0], edge[1])) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Esempio: Kruskal's Minimum Spanning Tree
+public int kruskalMST(int n, int[][] edges) {
+    // edges[i] = [u, v, weight]
+    Arrays.sort(edges, Comparator.comparingInt(e -> e[2])); // ordina per peso
+
+    UnionFind uf = new UnionFind(n);
+    int totalWeight = 0;
+    int edgesUsed = 0;
+
+    for (int[] edge : edges) {
+        if (uf.union(edge[0], edge[1])) {
+            totalWeight += edge[2];
+            edgesUsed++;
+            if (edgesUsed == n - 1) break; // MST ha n-1 archi
+        }
+    }
+    return edgesUsed == n - 1 ? totalWeight : -1; // -1 se grafo disconnesso
+}</code></pre>
+
+                <div class="info-box success">
+                    <strong>Pattern nelle interview:</strong> Union-Find compare in problemi di:
+                    <br>• <strong>Connected Components</strong>: "Quante isole ci sono?" / "Quanti gruppi?"
+                    <br>• <strong>Cycle Detection</strong>: in grafi non diretti
+                    <br>• <strong>MST</strong>: Kruskal's algorithm
+                    <br>• <strong>Equivalence</strong>: "Account merge", "Sentence similarity"
+                    <br>Se il problema chiede di raggruppare o connettere elementi, pensa a Union-Find.
+                </div>
+            </section>
+
+            <!-- Exercises Section -->
+            <section class="section" id="modulo12-exercises">
+                <h2>Esercizi Pratici</h2>
+
+                <h3>Esercizio 1: Validate Binary Search Tree</h3>
+                <p>Dato un albero binario, verifica se è un BST valido.</p>
+
+                <pre><code class="language-java">// Approccio: range valido per ogni nodo
+// Ogni nodo deve essere nel range (min, max) definito dai suoi antenati
+class TreeNode {
+    int val;
+    TreeNode left, right;
+    TreeNode(int val) { this.val = val; }
+}
+
+public boolean isValidBST(TreeNode root) {
+    return validate(root, Long.MIN_VALUE, Long.MAX_VALUE);
+}
+
+private boolean validate(TreeNode node, long min, long max) {
+    if (node == null) return true;
+    if (node.val <= min || node.val >= max) return false;
+
+    return validate(node.left, min, node.val)      // sx: max diventa node.val
+        && validate(node.right, node.val, max);     // dx: min diventa node.val
+}
+// Complessità: O(n) tempo, O(h) spazio (stack ricorsivo)</code></pre>
+
+                <h3>Esercizio 2: Number of Islands (BFS/DFS su griglia)</h3>
+                <p>Data una griglia 2D di '1' (terra) e '0' (acqua), conta il numero di isole. Un'isola è un gruppo di '1' connessi orizzontalmente o verticalmente.</p>
+
+                <pre><code class="language-java">// Approccio DFS: per ogni '1' non visitato, esplora tutta l'isola
+public int numIslands(char[][] grid) {
+    int count = 0;
+    for (int i = 0; i < grid.length; i++) {
+        for (int j = 0; j < grid[0].length; j++) {
+            if (grid[i][j] == '1') {
+                count++;
+                dfs(grid, i, j); // "affonda" tutta l'isola
+            }
+        }
+    }
+    return count;
+}
+
+private void dfs(char[][] grid, int r, int c) {
+    if (r < 0 || r >= grid.length || c < 0 || c >= grid[0].length
+            || grid[r][c] != '1') return;
+
+    grid[r][c] = '0'; // marca come visitato
+    dfs(grid, r + 1, c);
+    dfs(grid, r - 1, c);
+    dfs(grid, r, c + 1);
+    dfs(grid, r, c - 1);
+}
+// Complessità: O(m × n) tempo, O(m × n) spazio (stack ricorsivo worst case)</code></pre>
+
+                <h3>Esercizio 3: Course Schedule (Topological Sort)</h3>
+                <p>Dati n corsi e prerequisiti, determina se è possibile completare tutti i corsi.</p>
+
+                <pre><code class="language-java">// Approccio: se il grafo delle dipendenze ha un ciclo → impossibile
+public boolean canFinish(int numCourses, int[][] prerequisites) {
+    List&lt;List&lt;Integer&gt;&gt; adj = new ArrayList&lt;&gt;();
+    int[] inDegree = new int[numCourses];
+
+    for (int i = 0; i < numCourses; i++) adj.add(new ArrayList&lt;&gt;());
+
+    for (int[] pre : prerequisites) {
+        adj.get(pre[1]).add(pre[0]); // pre[1] → pre[0]
+        inDegree[pre[0]]++;
+    }
+
+    // Kahn's: BFS partendo dai nodi con in-degree 0
+    Queue&lt;Integer&gt; queue = new LinkedList&lt;&gt;();
+    for (int i = 0; i < numCourses; i++) {
+        if (inDegree[i] == 0) queue.offer(i);
+    }
+
+    int completed = 0;
+    while (!queue.isEmpty()) {
+        int course = queue.poll();
+        completed++;
+        for (int next : adj.get(course)) {
+            if (--inDegree[next] == 0) queue.offer(next);
+        }
+    }
+    return completed == numCourses; // se non tutti completati → ciclo
+}
+// Complessità: O(V + E) tempo, O(V + E) spazio</code></pre>
+            </section>
+
+            <!-- Quiz Section Modulo 12 -->
+            <section class="quiz-section" id="modulo12-quiz">
+                <h2>Interactive Challenge Quiz - Modulo 12</h2>
+
+                <!-- Question 56 -->
+                <div class="quiz-question" data-correct="c">
+                    <h4><span>Q1.</span> Come si cancella un nodo con due figli da un BST?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q56" id="q56a" value="a">
+                            <label for="q56a">Si rimuove il nodo e si ricollegano entrambi i figli al padre</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q56" id="q56b" value="b">
+                            <label for="q56b">Si ricostruisce l'intero sottoalbero con i nodi rimanenti</label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q56" id="q56c" value="c">
+                            <label for="q56c">Si sostituisce con il successore in-order (minimo del sottoalbero destro) e si elimina il successore</label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q56" id="q56d" value="d">
+                            <label for="q56d">Si sostituisce con il figlio sinistro e si scarta il sottoalbero destro</label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q56')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q56"></div>
+                </div>
+
+                <!-- Question 57 -->
+                <div class="quiz-question" data-correct="b">
+                    <h4><span>Q2.</span> Quale algoritmo è il più appropriato per il Topological Sort?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q57" id="q57a" value="a">
+                            <label for="q57a">BFS standard senza modifiche</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q57" id="q57b" value="b">
+                            <label for="q57b">DFS con post-order (o Kahn's con in-degree)</label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q57" id="q57c" value="c">
+                            <label for="q57c">Dijkstra con pesi unitari</label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q57" id="q57d" value="d">
+                            <label for="q57d">Ordinamento dei nodi per peso degli archi</label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q57')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q57"></div>
+                </div>
+
+                <!-- Question 58 -->
+                <div class="quiz-question" data-correct="a">
+                    <h4><span>Q3.</span> Come funziona l'inserimento in un Min-Heap?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q58" id="q58a" value="a">
+                            <label for="q58a">Inserisci alla fine dell'array e fai bubble-up confrontando con il padre</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q58" id="q58b" value="b">
+                            <label for="q58b">Inserisci nella posizione corretta mantenendo l'array ordinato</label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q58" id="q58c" value="c">
+                            <label for="q58c">Inserisci come in un BST: sinistro se minore, destro se maggiore</label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q58" id="q58d" value="d">
+                            <label for="q58d">Ricostruisci l'intero heap da zero includendo il nuovo elemento, con costo O(n log n)</label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q58')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q58"></div>
+                </div>
+
+                <!-- Question 59 -->
+                <div class="quiz-question" data-correct="d">
+                    <h4><span>Q4.</span> Qual è la complessità ammortizzata di Union-Find con path compression e union by rank?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q59" id="q59a" value="a">
+                            <label for="q59a">O(1) esatto per operazione</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q59" id="q59b" value="b">
+                            <label for="q59b">O(log n) per operazione</label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q59" id="q59c" value="c">
+                            <label for="q59c">O(n) per operazione</label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q59" id="q59d" value="d">
+                            <label for="q59d">O(&#945;(n)) per operazione, dove &#945; è la funzione inversa di Ackermann</label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q59')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q59"></div>
+                </div>
+
+                <!-- Question 60 -->
+                <div class="quiz-question" data-correct="b">
+                    <h4><span>Q5.</span> Per un autocomplete system con milioni di parole, qual è la struttura dati più efficiente per la ricerca per prefisso?</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-value="a">
+                            <input type="radio" name="q60" id="q60a" value="a">
+                            <label for="q60a">HashMap con tutte le parole come chiavi</label>
+                        </div>
+                        <div class="quiz-option" data-value="b">
+                            <input type="radio" name="q60" id="q60b" value="b">
+                            <label for="q60b">Trie (Prefix Tree)</label>
+                        </div>
+                        <div class="quiz-option" data-value="c">
+                            <input type="radio" name="q60" id="q60c" value="c">
+                            <label for="q60c">Binary Search Tree con le parole ordinate</label>
+                        </div>
+                        <div class="quiz-option" data-value="d">
+                            <input type="radio" name="q60" id="q60d" value="d">
+                            <label for="q60d">Array ordinato con binary search</label>
+                        </div>
+                    </div>
+                    <button class="check-btn" onclick="checkAnswer('q60')">Verifica Risposta</button>
+                    <div class="feedback" id="feedback-q60"></div>
+                </div>
+            </section>
+
+            <!-- Questions Section Modulo 12 -->
+            <section class="section" id="modulo12-questions">
+                <h2>Domande da Colloquio - Modulo 12</h2>
+
+                <div class="info-box">
+                    <h4>Q: Quando sceglieresti un BST (TreeMap) rispetto a una HashMap?</h4>
+                    <p><strong>Risposta attesa:</strong> TreeMap (Red-Black BST) quando serve <strong>ordinamento delle chiavi</strong>: range queries (subMap, headMap, tailMap), navigazione (firstKey, lastKey, ceilingKey, floorKey), o iterazione ordinata. HashMap è O(1) per get/put vs O(log n) di TreeMap, quindi se non serve ordine, HashMap è sempre preferibile. Caso d'uso tipico: un leaderboard dove devi trovare "tutti i giocatori con punteggio tra 100 e 200" → TreeMap. Un cache key→value → HashMap.</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>Q: Spiega la differenza tra BFS e DFS e quando useresti ciascuno.</h4>
+                    <p><strong>Risposta attesa:</strong> BFS esplora per livelli usando una Queue, DFS esplora in profondità usando Stack/ricorsione. BFS: shortest path in grafi non pesati (ogni arco ha peso 1), level-order traversal, "nearest" problems (es: trovare la parola più vicina). DFS: cycle detection, topological sort, connected components, path existence, backtracking problems. BFS usa O(V) spazio per il livello più ampio; DFS usa O(V) per la profondità massima. Su alberi: BFS = level-order, DFS = pre/in/post-order.</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>Q: Come funziona Dijkstra e perché non funziona con pesi negativi?</h4>
+                    <p><strong>Risposta attesa:</strong> Dijkstra usa una Priority Queue (Min-Heap). Ad ogni passo, estrae il nodo con distanza minima e "rilassa" i suoi vicini: se dist[u] + weight(u,v) < dist[v], aggiorna dist[v]. Funziona perché, con pesi non negativi, una volta che un nodo è estratto dalla PQ, la sua distanza è definitiva. Con pesi negativi, questa assunzione fallisce: un percorso più lungo con un arco negativo potrebbe essere più corto di quello già processato. Alternativa: Bellman-Ford (O(V×E)), che rilassa tutti gli archi V-1 volte.</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>Q: Qual è la differenza tra Heap e BST? Quando usi quale?</h4>
+                    <p><strong>Risposta attesa:</strong> Un Heap garantisce solo che il minimo/massimo è alla radice (partial ordering): estrazione del min/max in O(log n), peek in O(1). Un BST mantiene un ordinamento completo: ricerca di qualsiasi elemento in O(log n). Usa Heap quando ti interessa solo il min/max (Priority Queue, Dijkstra, top-K). Usa BST quando serve ricerca, range query, o ordinamento completo. Heap è implementato come array (cache-friendly), BST come nodi con puntatori. Build heap è O(n), build BST bilanciato è O(n log n).</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>Q: Come rilevi un ciclo in un grafo diretto vs non diretto?</h4>
+                    <p><strong>Risposta attesa:</strong> <strong>Grafo diretto</strong>: DFS con 3 colori (white/gray/black). Se durante la visita incontri un nodo gray (in corso di visita nello stack corrente), hai un back edge → ciclo. Alternativa: topological sort con Kahn's - se non puoi processare tutti i nodi, c'è un ciclo. <strong>Grafo non diretto</strong>: DFS con visited + parent tracking: se incontri un nodo visitato che non è il padre → ciclo. Alternativa: Union-Find - se union(u,v) trova che u e v sono già nello stesso componente → ciclo. Union-Find è spesso più semplice per grafi non diretti.</p>
+                </div>
+
+                <div class="info-box">
+                    <h4>Q: Spiega Union-Find e un caso d'uso pratico.</h4>
+                    <p><strong>Risposta attesa:</strong> Union-Find gestisce insiemi disgiunti con find (trova il rappresentante dell'insieme) e union (unisci due insiemi). Con path compression e union by rank, entrambe le operazioni sono O(α(n)) ammortizzato, praticamente O(1). Caso d'uso: social network - "questi utenti sono nello stesso gruppo di amici?". Ogni amicizia è una union, ogni verifica è un find. Altro caso: Kruskal's MST - ordina gli archi per peso, aggiungi se non crea ciclo (union restituisce false se già connessi). Anche per "Number of Islands" si può usare Union-Find come alternativa a DFS.</p>
+                </div>
+            </section>
+
         </main>
     </div>
 
@@ -11634,6 +13068,98 @@ public class OrderQueryHandler {
                     a: '❌ Sbagliato. SHA-256 è troppo veloce per password hashing. Con hardware moderno, un attacker può provare miliardi di combinazioni al secondo. È ok per checksum, non per password.',
                     b: '❌ Sbagliato. MD5 è completamente broken - collision attacks pratici, rainbow tables disponibili. MAI usare MD5 per nulla di security-related.',
                     d: '❌ Sbagliato. AES è encryption simmetrica: reversibile con la chiave. Per le password serve hashing one-way: non devi MAI poter recuperare la password originale.'
+                }
+            },
+            // Modulo 11: DDD & Clean Architecture
+            q51: {
+                correct: 'b',
+                correctText: '✅ Corretto! La distinzione fondamentale è l\'identità. Un\'Entity ha un\'identità unica che persiste nel tempo (es: un User con ID). Due Entity con gli stessi attributi ma ID diversi sono diverse. Un Value Object è definito interamente dai suoi attributi: due Money(100, "EUR") sono identici e intercambiabili. I Value Object sono tipicamente immutabili e non hanno ID.',
+                incorrectText: {
+                    a: '❌ Sbagliato. La mutabilità non è la distinzione primaria. Un\'Entity PUÒ essere immutabile (es: con Event Sourcing). La differenza chiave è l\'identità: Entity ha identity, Value Object è definito dai suoi attributi.',
+                    c: '❌ Sbagliato. Un Value Object PUÒ essere persistito in DB (come colonna embedded o tabella separata). JPA supporta @Embeddable per Value Objects. La persistenza non definisce la distinzione.',
+                    d: '❌ Sbagliato. Sia Entity che Value Object possono avere metodi con logica di business. Un Value Object Money può avere add(), multiply(). La distinzione non riguarda metodi vs dati.'
+                }
+            },
+            q52: {
+                correct: 'c',
+                correctText: '✅ Corretto! La Dependency Rule dice che le dipendenze puntano verso l\'interno (verso il dominio). Questo protegge la business logic dai cambiamenti nei dettagli implementativi (database, framework, UI). Se cambi database da PostgreSQL a MongoDB, il dominio non cambia. Se aggiorni Spring Boot, il dominio non cambia. Il dominio dipende solo da se stesso.',
+                incorrectText: {
+                    a: '❌ Sbagliato. Le performance non sono il motivo principale. L\'indirezione dei layer può addirittura aggiungere overhead. Il vantaggio è la manutenibilità e la protezione del dominio.',
+                    b: '❌ Sbagliato. In Clean Architecture il database è un "dettaglio implementativo", cioè uno dei componenti MENO importanti architetturalmente. Il dominio (business rules) è al centro.',
+                    d: '❌ Sbagliato. Clean Architecture non riguarda specificamente i microservizi. Si applica ugualmente a monoliti. Il principio è proteggere il dominio, non facilitare il deployment.'
+                }
+            },
+            q53: {
+                correct: 'a',
+                correctText: '✅ Corretto! In Event Sourcing, lo stato corrente si ricostruisce applicando tutti gli eventi in ordine cronologico (event replay). Parti da uno stato vuoto e applichi OrderCreated → ItemAdded → PaymentReceived → OrderShipped. Ogni evento modifica lo stato incrementalmente. Per performance, puoi usare snapshot periodici e riapplicare solo gli eventi successivi.',
+                incorrectText: {
+                    b: '❌ Parzialmente corretto. Gli snapshot sono un\'ottimizzazione per performance, ma non sono il meccanismo fondamentale. Il principio base è il replay degli eventi. Senza snapshot, il sistema funziona comunque (più lentamente).',
+                    c: '❌ Sbagliato. In Event Sourcing NON fai query SQL tradizionali sullo stato. Lo stato non è salvato come riga in una tabella - è derivato dalla sequenza di eventi. Le query sullo stato usano Read Model/Projections.',
+                    d: '❌ Sbagliato. Non deserializzi un singolo JSON. L\'event store contiene MOLTI eventi individuali, ognuno rappresenta un cambiamento. Li riapplichi in sequenza per costruire lo stato.'
+                }
+            },
+            q54: {
+                correct: 'd',
+                correctText: '✅ Corretto! In CQRS, il Read Model è separato dal Write Model. Questa separazione permette di ottimizzare la struttura dati esclusivamente per le query necessarie. Puoi denormalizzare, pre-calcolare aggregazioni, usare database diversi (Elasticsearch per ricerca, Redis per contatori). Non serve normalizzazione perché i dati sono derivati dal Write Model tramite eventi.',
+                incorrectText: {
+                    a: '❌ Parzialmente corretto ma manca il punto chiave. Non è solo "sola lettura" - è che la SEPARAZIONE dal Write Model permette ottimizzazioni specifiche. In un sistema non-CQRS, i dati di lettura e scrittura condividono lo stesso modello.',
+                    b: '❌ Sbagliato. Le query sono spesso PIÙ importanti dei comandi in termini di volume (read-heavy systems). CQRS esiste proprio per ottimizzare le letture indipendentemente dalle scritture.',
+                    c: '❌ Sbagliato. MongoDB supporta embedding e referencing. Il Read Model in CQRS può usare QUALSIASI database (SQL, NoSQL, search engine). La scelta dipende dal pattern di query.'
+                }
+            },
+            q55: {
+                correct: 'b',
+                correctText: '✅ Corretto! L\'Aggregate Root è il guardiano degli invarianti di business. Solo lui può modificare lo stato dell\'Aggregate perché deve verificare che le regole di business siano rispettate. Es: un Order (root) verifica che il totale non superi il limite di credito quando si aggiunge un OrderItem. Se l\'OrderItem fosse modificabile direttamente, si potrebbe violare questo invariante.',
+                incorrectText: {
+                    a: '❌ Sbagliato. Il numero di classi non è il motivo. L\'Aggregate può contenere molte classi. Il punto è che tutte le modifiche passano per la root per validare invarianti.',
+                    c: '❌ Sbagliato. L\'Aggregate Root non riguarda le performance delle query. Riguarda la consistenza transazionale e il rispetto degli invarianti di business.',
+                    d: '❌ Sbagliato. JPA non richiede una singola root entity. Puoi avere relazioni complesse. L\'Aggregate Root è un concetto DDD, non un vincolo JPA.'
+                }
+            },
+            // Modulo 12: Data Structures Avanzate
+            q56: {
+                correct: 'c',
+                correctText: '✅ Corretto! In un BST, la cancellazione di un nodo con due figli richiede trovare il successore in-order (il minimo del sottoalbero destro) o il predecessore in-order (il massimo del sottoalbero sinistro). Si copia il valore del successore nel nodo da eliminare, poi si cancella il successore (che ha al massimo un figlio). Questo mantiene la proprietà BST invariata.',
+                incorrectText: {
+                    a: '❌ Sbagliato. Non puoi semplicemente eliminare il nodo e ricollegare i figli al padre. Dove colleghi due figli a un singolo puntatore? E anche se potessi, la proprietà BST potrebbe essere violata.',
+                    b: '❌ Sbagliato. Ricostruire l\'intero sottoalbero è O(n) nel caso peggiore. La cancellazione con successore/predecessore in-order è O(h) dove h è l\'altezza.',
+                    d: '❌ Sbagliato. Sostituire con il figlio sinistro ignorerebbe completamente il sottoalbero destro e violerebbe la proprietà BST. Serve il successore/predecessore in-order.'
+                }
+            },
+            q57: {
+                correct: 'b',
+                correctText: '✅ Corretto! DFS (Depth-First Search) è l\'algoritmo corretto per il topological sort. Visiti ogni nodo, vai in profondità nei vicini, e quando un nodo ha finito tutti i suoi vicini, lo aggiungi allo stack (post-order). Il risultato invertito dello stack è l\'ordine topologico. Alternativa: Kahn\'s algorithm usa BFS con in-degree, ma DFS è l\'approccio classico. BFS diretto non garantisce l\'ordine topologico.',
+                incorrectText: {
+                    a: '❌ Sbagliato. BFS standard visita per livelli, non rispetta le dipendenze topologiche. L\'algoritmo di Kahn usa BFS con in-degree tracking (non BFS puro). DFS con post-order è l\'approccio classico.',
+                    c: '❌ Sbagliato. Dijkstra è per il shortest path in grafi pesati, non per il topological sort. Il topological sort riguarda l\'ordinamento delle dipendenze in DAG.',
+                    d: '❌ Sbagliato. Il sort topologico non richiede un grafo pesato. Funziona su DAG (Directed Acyclic Graph) non pesati. Ordinare i pesi non ha senso in questo contesto.'
+                }
+            },
+            q58: {
+                correct: 'a',
+                correctText: '✅ Corretto! Un Min-Heap è un albero binario completo dove ogni nodo è minore o uguale ai suoi figli. L\'inserimento mette l\'elemento in fondo (ultima posizione dell\'array) e fa "bubble up" (swim/sift-up): confronta con il padre e scambia se necessario, risalendo fino alla radice. Complessità O(log n) perché l\'albero ha altezza log n. L\'estrazione del minimo rimuove la radice, mette l\'ultimo elemento al suo posto, e fa "bubble down".',
+                incorrectText: {
+                    b: '❌ Sbagliato. Inserire in posizione ordinata richiederebbe O(n) per spostare gli elementi. L\'heap NON è ordinato linearmente - ha solo la proprietà heap (padre ≤ figli). Il bubble-up è O(log n).',
+                    c: '❌ Sbagliato. Un heap non è un BST. In un BST il figlio sinistro è minore e il destro maggiore. In un Min-Heap, entrambi i figli sono maggiori o uguali al padre, senza relazione tra fratelli.',
+                    d: '❌ Sbagliato. L\'inserimento in un heap è O(log n), non O(n log n). O(n log n) è la complessità di Heap Sort completo (n inserimenti × log n ciascuno), non di un singolo inserimento.'
+                }
+            },
+            q59: {
+                correct: 'd',
+                correctText: '✅ Corretto! Union-Find con path compression e union by rank raggiunge complessità ammortizzata O(α(n)) per operazione, dove α è la funzione inversa di Ackermann. α(n) ≤ 4 per qualsiasi n praticabile (fino a 2^65536), quindi è essenzialmente O(1) in pratica. Path compression appiattisce l\'albero durante find(), union by rank mantiene gli alberi bilanciati.',
+                incorrectText: {
+                    a: '❌ Sbagliato. O(1) sarebbe la complessità esatta, ma Union-Find è O(α(n)) ammortizzato, non O(1) nel caso peggiore. Anche se α(n) ≤ 4 in pratica, teoricamente non è costante.',
+                    b: '❌ Sbagliato. O(log n) è la complessità senza path compression (solo con union by rank). Con entrambe le ottimizzazioni si raggiunge O(α(n)) ≈ O(1).',
+                    c: '❌ Sbagliato. O(n) sarebbe la complessità SENZA ottimizzazioni (albero degenerato in lista). Con path compression e union by rank è molto meglio.'
+                }
+            },
+            q60: {
+                correct: 'b',
+                correctText: '✅ Corretto! Per un autocomplete system, il Trie (Prefix Tree) è la struttura ottimale. Ogni nodo rappresenta un carattere e i cammini dalla radice formano i prefissi. La ricerca di tutte le parole con un dato prefisso è O(p + k) dove p è la lunghezza del prefisso e k il numero di risultati. HashMap richiederebbe iterare tutte le chiavi O(n). BST richiederebbe O(n log n) per filtrare. Array ordinato con binary search trova UN match, non tutti i prefissi.',
+                incorrectText: {
+                    a: '❌ Sbagliato. Una HashMap non supporta ricerca per prefisso in modo efficiente. Dovresti iterare TUTTE le chiavi e controllare startsWith() - O(n × p). Il Trie fa la stessa cosa in O(p + k).',
+                    c: '❌ Sbagliato. Un BST ordina per valore completo, non per prefisso. Trovare tutte le stringhe con prefisso "app" richiederebbe attraversare molti nodi irrilevanti. Il Trie segue il prefisso direttamente.',
+                    d: '❌ Sbagliato. Un array ordinato con binary search trova UNA stringa esatta in O(log n). Per trovare tutte le stringhe con un prefisso, puoi usare due binary search per il range, ma la costruzione è O(n log n) e l\'inserimento O(n). Il Trie è più efficiente per inserimenti frequenti.'
                 }
             }
         };

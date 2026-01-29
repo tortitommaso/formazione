@@ -1,222 +1,133 @@
-# TODO - Manuale Definitivo per Colloqui Tecnici 2026
+# TODO - Percorso di Formazione Tech 2026
 
-## Stato Avanzamento
+## DA COMPLETARE
 
-### COMPLETATI
+### Modulo 13: System Design
+- [ ] Framework per affrontare un problema di system design:
+  - [ ] Raccolta requisiti (funzionali e non funzionali)
+  - [ ] Back-of-the-envelope estimation (traffico, storage, bandwidth)
+  - [ ] API design
+  - [ ] Data model e scelta database
+  - [ ] High-level design
+  - [ ] Deep dive sui componenti critici
+- [ ] Esercizi completi:
+  - [ ] URL Shortener (hashing, base62, read-heavy system)
+  - [ ] Chat System (WebSocket, presence, message delivery)
+  - [ ] News Feed / Timeline (fan-out on write vs read, ranking)
+  - [ ] Rate Limiter (token bucket, sliding window, distributed)
+  - [ ] Notification System (push, email, SMS, priority queue)
+- [ ] Pattern ricorrenti:
+  - [ ] Database sharding e partitioning strategies
+  - [ ] Consistent hashing
+  - [ ] Message queue come disaccoppiamento
+  - [ ] CDN e caching multi-livello
+  - [ ] Database replication (master-slave, multi-master)
+- [ ] Quiz interattivo
+- [ ] Domande da colloquio
 
-- [x] **Modulo 1: Java & Spring Boot Deep Dive**
-  - [x] Inversion of Control & Dependency Injection
-  - [x] Bean Lifecycle (diagramma completo 9 fasi)
-  - [x] Spring Annotations (tutte le principali categorie)
-  - [x] Proxy Pattern (JDK vs CGLIB, self-invocation)
-  - [x] @Transactional (propagation, isolation, rollback)
-  - [x] Spring Security (OAuth2/JWT)
-  - [x] Spring Data JPA & N+1 Problem
-  - [x] Quiz interattivo (5 domande)
+### Modulo 14: Concurrency & Multithreading
+- [ ] Fondamenti:
+  - [ ] Thread, Runnable, Callable
+  - [ ] Thread lifecycle e stati
+  - [ ] synchronized, volatile, atomic classes
+  - [ ] Race conditions e deadlock (detection, prevention)
+- [ ] Java Concurrency API:
+  - [ ] ExecutorService e ThreadPool (Fixed, Cached, Scheduled)
+  - [ ] Future e CompletableFuture (chaining, combining, error handling)
+  - [ ] CountDownLatch, CyclicBarrier, Semaphore
+  - [ ] Concurrent Collections (ConcurrentHashMap, BlockingQueue, CopyOnWriteArrayList)
+  - [ ] ReadWriteLock vs StampedLock
+- [ ] Virtual Threads (Java 21):
+  - [ ] Platform threads vs virtual threads
+  - [ ] Structured concurrency
+  - [ ] Quando usare e quando evitare
+- [ ] Pattern:
+  - [ ] Producer-Consumer
+  - [ ] Thread-safe Singleton
+  - [ ] Fork/Join framework
+- [ ] Quiz interattivo
+- [ ] Domande da colloquio
 
-- [x] **Modulo 2: Testing Strategy**
-  - [x] Test Pyramid (diagramma, anti-pattern Ice Cream Cone)
-  - [x] Unit vs Integration vs E2E Tests (esempi con JUnit, Mockito, TestContainers, REST Assured)
-  - [x] Mocking vs Stubbing (taxonomy test doubles)
-  - [x] Quiz interattivo (4 domande)
-  - [x] ~~TDD~~ (rimosso su richiesta utente)
+### Modulo 15: Design Patterns
+- [ ] Creational:
+  - [ ] Factory Method e Abstract Factory
+  - [ ] Builder (con esempi Java reali: Lombok, Stream API)
+  - [ ] Singleton (thread-safe, enum, problemi con testing)
+  - [ ] Prototype
+- [ ] Structural:
+  - [ ] Adapter
+  - [ ] Decorator (Java I/O streams come esempio)
+  - [ ] Facade
+  - [ ] Proxy (collegamento con Spring AOP)
+- [ ] Behavioral:
+  - [ ] Strategy (con lambdas in Java moderno)
+  - [ ] Observer (collegamento con event-driven architecture)
+  - [ ] Template Method
+  - [ ] Chain of Responsibility (middleware, filter chain)
+  - [ ] Command
+- [ ] Quando usare e quando evitare (anti-pattern di overengineering)
+- [ ] Quiz interattivo
+- [ ] Domande da colloquio
 
-- [x] **Modulo 3: Architettura & Scalabilità**
-  - [x] Monoliti vs Microservizi (pro/contro, Modular Monolith)
-  - [x] Pattern di resilienza:
-    - [x] Circuit Breaker (stati: closed, open, half-open) con Resilience4j
-    - [x] Bulkhead Pattern (semaphore e thread-pool)
-    - [x] Retry Pattern con Exponential Backoff
-    - [x] Timeout Pattern
-  - [x] CAP Theorem (+ PACELC, consistency models)
-  - [x] Load Balancing (Round Robin, Least Connections, Weighted, Consistent Hashing, L4 vs L7)
-  - [x] Caching strategies (Cache-Aside, Write-Through, Write-Behind, Redis vs Memcached)
-  - [x] Quiz interattivo (5 domande, q11-q15)
+### Modulo 16: Java Internals & JVM
+- [ ] JVM Architecture:
+  - [ ] Class loading (Bootstrap, Extension, Application)
+  - [ ] Memory model (Heap, Stack, Metaspace, Code Cache)
+  - [ ] JIT compilation (C1, C2, Graal)
+- [ ] Garbage Collection:
+  - [ ] GC roots e reachability
+  - [ ] Generational GC (Young, Old, Survivor spaces)
+  - [ ] GC algorithms (Serial, Parallel, G1, ZGC, Shenandoah)
+  - [ ] GC tuning e flag comuni
+  - [ ] Memory leaks: cause e diagnosi
+- [ ] Generics deep dive:
+  - [ ] Type erasure
+  - [ ] Bounded wildcards (PECS: Producer Extends, Consumer Super)
+  - [ ] Generic methods
+- [ ] Java Records, Sealed Classes, Pattern Matching (Java 17+)
+- [ ] Quiz interattivo
+- [ ] Domande da colloquio
 
-- [x] **Modulo 4: Database & Messaging**
-  - [x] SQL vs NoSQL (ACID vs BASE, polyglot persistence, quando usare)
-  - [x] Deep dive Kafka:
-    - [x] Event streaming architecture (topics, partitions, brokers)
-    - [x] Partitions, Consumer Groups, offsets
-    - [x] Exactly-once semantics (idempotent producer, transactions)
-    - [x] Partitioning strategy
-  - [x] Deep dive RabbitMQ:
-    - [x] Message broker concepts (AMQP)
-    - [x] Exchange types (Direct, Fanout, Topic, Headers)
-    - [x] Queues, Bindings, DLQ
-    - [x] Acknowledgments e retry
-  - [x] Kafka vs RabbitMQ (tabella comparativa, when to use what)
-  - [x] Quiz interattivo (5 domande, q16-q20)
+### Modulo 17: Distributed Systems Avanzati
+- [ ] Saga Pattern:
+  - [ ] Orchestration vs Choreography (diagrammi, pro/contro)
+  - [ ] Compensating transactions
+  - [ ] Implementazione con Kafka/eventi
+- [ ] Distributed Transactions:
+  - [ ] Two-Phase Commit (2PC) e problemi
+  - [ ] Outbox Pattern
+  - [ ] Change Data Capture (Debezium)
+- [ ] Idempotency Patterns:
+  - [ ] Idempotency key
+  - [ ] Deduplication strategies
+  - [ ] At-least-once vs exactly-once delivery
+- [ ] Consensus:
+  - [ ] Raft (concetti base: leader election, log replication)
+  - [ ] Perche' serve (split-brain, network partition)
+- [ ] Distributed Locking (Redis Redlock, ZooKeeper)
+- [ ] Quiz interattivo
+- [ ] Domande da colloquio
 
-- [x] **Modulo 5: Cloud & DevOps**
-  - [x] Docker (Containerization):
-    - [x] Container vs VM (diagramma comparativo)
-    - [x] Dockerfile best practices
-    - [x] Multi-stage builds
-    - [x] Layer caching (diagramma cache invalidation)
-    - [x] Docker Compose per sviluppo locale
-  - [x] Kubernetes:
-    - [x] Architettura cluster (Control Plane, Worker Nodes)
-    - [x] Pod (resources, probes, env)
-    - [x] Deployment (rolling update strategy)
-    - [x] Service (ClusterIP, NodePort, LoadBalancer, ExternalName)
-    - [x] Ingress (TLS, routing rules)
-    - [x] ConfigMaps e Secrets
-    - [x] Horizontal Pod Autoscaler (HPA)
-  - [x] CI/CD Pipelines:
-    - [x] GitHub Actions (workflow completo con test, build, deploy)
-    - [x] Jenkins (Declarative Pipeline con Jenkinsfile)
-    - [x] Confronto GitHub Actions vs Jenkins
-  - [x] Deployment strategies:
-    - [x] Rolling Update (diagramma progressivo)
-    - [x] Blue-Green (diagramma switch, rollback istantaneo)
-    - [x] Canary (diagramma fasi, Argo Rollouts, AnalysisTemplate)
-    - [x] Tabella comparativa strategie
-  - [x] Quiz interattivo (5 domande, q21-q25)
-
-- [x] **Modulo 6: Advanced Topics 2026**
-  - [x] Observability:
-    - [x] I tre pilastri (Logs, Metrics, Traces)
-    - [x] Logging (structured logging, MDC, ELK stack, Loki)
-    - [x] Metrics (Prometheus, Micrometer, PromQL, Four Golden Signals)
-    - [x] Tracing (OpenTelemetry, Jaeger, Context Propagation, Sampling)
-    - [x] Correlazione tra i tre pilastri
-  - [x] Infrastructure as Code:
-    - [x] Terraform basics (HCL, providers, resources, data sources)
-    - [x] Terraform workflow (init, plan, apply, destroy)
-    - [x] State management (remote state, locking, security)
-    - [x] Modules (riusabilità, Terraform Registry)
-    - [x] Best practices
-  - [x] LLM/AI Integration:
-    - [x] RAG (Retrieval Augmented Generation) architecture
-    - [x] Embeddings e similarity search
-    - [x] Vector Databases (Pinecone, Weaviate, pgvector, Milvus, Qdrant)
-    - [x] Spring AI implementation
-    - [x] Advanced patterns (Hybrid Search, Query Transformation, Chunking)
-    - [x] Considerazioni architetturali (latency, cost, security)
-  - [x] Quiz interattivo (5 domande, q26-q30)
-  - [x] Domande da colloquio (7 domande con risposte)
-
-- [x] **Modulo 7: Coding Challenges**
-  - [x] LRU Cache:
-    - [x] Approccio HashMap + Doubly Linked List (diagramma)
-    - [x] Soluzione commentata Java
-    - [x] Soluzione commentata Python (con OrderedDict)
-    - [x] Analisi complessità O(1) get/put
-    - [x] Errori comuni da evitare
-  - [x] Valid Parentheses:
-    - [x] Approccio Stack (diagramma step-by-step)
-    - [x] Soluzione commentata Java (due versioni)
-    - [x] Soluzione commentata Python
-    - [x] Analisi complessità O(n) time, O(n) space
-    - [x] Varianti del problema
-  - [x] Merge Intervals:
-    - [x] Approccio Sort + Linear Scan (diagramma)
-    - [x] Soluzione commentata Java
-    - [x] Soluzione commentata Python
-    - [x] Analisi complessità O(n log n)
-    - [x] Varianti del problema
-  - [x] Quiz interattivo (5 domande, q31-q35)
-  - [x] Domande da colloquio (6 domande con risposte)
-
-- [x] **Modulo 8: Paradigmi di Programmazione**
-  - [x] Programmazione Funzionale:
-    - [x] Pure Functions (con esempi Java)
-    - [x] Immutability (record Java, vantaggi)
-    - [x] First-Class Functions (Function, closure)
-    - [x] Higher-order functions (map, filter, reduce con diagramma)
-  - [x] Java Streams API:
-    - [x] Stream vs Collection
-    - [x] Operazioni Intermediate vs Terminal
-    - [x] Esempi completi (filter, map, flatMap, groupingBy, etc.)
-    - [x] Optional e null-safety (anti-pattern)
-    - [x] Parallel Streams (quando usare)
-  - [x] Confronto OOP vs FP:
-    - [x] Tabella comparativa
-    - [x] Quando usare cosa (diagramma decisionale)
-    - [x] Esempio pratico stesso problema in entrambi gli stili
-    - [x] Composizione di funzioni
-    - [x] Pattern funzionali (currying, memoization, Either)
-  - [x] Quiz interattivo (5 domande, q36-q40)
-  - [x] Domande da colloquio (6 domande con risposte)
-
----
-
-### DA COMPLETARE
-
-- [ ] **Modulo 9: API Design**
-  - [ ] REST Best Practices:
-    - [ ] Resource naming conventions
-    - [ ] HTTP methods e status codes
-    - [ ] Idempotency
-    - [ ] Pagination (offset vs cursor)
-    - [ ] Filtering, sorting, searching
-    - [ ] HATEOAS
-  - [ ] Versioning strategies (URL, header, query param)
-  - [ ] Error handling e formato errori
-  - [ ] Rate limiting e throttling
-  - [ ] API Documentation (OpenAPI/Swagger)
-  - [ ] GraphQL vs REST vs gRPC (quando usare)
-  - [ ] Quiz interattivo
-  - [ ] Domande da colloquio
-
-- [ ] **Modulo 10: Security**
-  - [ ] OWASP Top 10:
-    - [ ] Injection (SQL, NoSQL, Command)
-    - [ ] Broken Authentication
-    - [ ] XSS (Cross-Site Scripting)
-    - [ ] CSRF (Cross-Site Request Forgery)
-    - [ ] Security Misconfiguration
-    - [ ] Sensitive Data Exposure
-  - [ ] Authentication patterns:
-    - [ ] Session-based vs Token-based
-    - [ ] JWT deep dive (structure, signing, validation)
-    - [ ] OAuth 2.0 flows
-    - [ ] OpenID Connect
-  - [ ] Authorization (RBAC, ABAC)
-  - [ ] Secrets management
-  - [ ] HTTPS, TLS, certificate management
-  - [ ] Secure coding practices
-  - [ ] Quiz interattivo
-  - [ ] Domande da colloquio
-
-- [ ] **Modulo 11: DDD & Clean Architecture**
-  - [ ] Domain Driven Design:
-    - [ ] Ubiquitous Language
-    - [ ] Bounded Contexts
-    - [ ] Entities vs Value Objects
-    - [ ] Aggregates e Aggregate Root
-    - [ ] Domain Events
-    - [ ] Repository pattern
-  - [ ] Clean Architecture:
-    - [ ] Dependency Rule
-    - [ ] Layers (Entities, Use Cases, Interface Adapters, Frameworks)
-    - [ ] Ports & Adapters (Hexagonal)
-  - [ ] Event Sourcing
-  - [ ] CQRS (Command Query Responsibility Segregation)
-  - [ ] Quiz interattivo
-  - [ ] Domande da colloquio
-
-- [ ] **Modulo 12: Data Structures Avanzate**
-  - [ ] Trees:
-    - [ ] Binary Search Tree (BST)
-    - [ ] Balanced trees (AVL, Red-Black) - concetti
-    - [ ] Trie (Prefix Tree)
-    - [ ] Operazioni e complessità
-  - [ ] Graphs:
-    - [ ] Rappresentazioni (adjacency list, matrix)
-    - [ ] BFS (Breadth-First Search)
-    - [ ] DFS (Depth-First Search)
-    - [ ] Shortest path (Dijkstra)
-    - [ ] Topological sort
-  - [ ] Heaps:
-    - [ ] Min-Heap, Max-Heap
-    - [ ] Priority Queue
-    - [ ] Heap sort
-  - [ ] Union-Find (Disjoint Set)
-  - [ ] Esercizi pratici con soluzioni
-  - [ ] Quiz interattivo
-  - [ ] Domande da colloquio
+### Modulo 18: Coding Patterns Avanzati
+- [ ] Dynamic Programming:
+  - [ ] Top-down (memoization) vs Bottom-up (tabulation)
+  - [ ] Climbing Stairs, Coin Change, Longest Common Subsequence
+  - [ ] Knapsack (0/1 e unbounded)
+- [ ] Sliding Window:
+  - [ ] Fixed vs Variable window
+  - [ ] Maximum Subarray Sum, Longest Substring Without Repeating
+- [ ] Two Pointers:
+  - [ ] Two Sum (sorted), Container With Most Water, 3Sum
+- [ ] Backtracking:
+  - [ ] Permutations, Combinations, Subsets
+  - [ ] N-Queens, Sudoku Solver
+- [ ] Binary Search avanzato:
+  - [ ] Search in Rotated Array
+  - [ ] Find Minimum in Rotated Array
+  - [ ] Search range
+- [ ] Ogni problema con soluzione Java commentata e analisi complessita'
+- [ ] Quiz interattivo
+- [ ] Domande da colloquio
 
 ---
 
@@ -228,17 +139,9 @@
 - **Quiz**: JavaScript con feedback immediato e spiegazioni dettagliate
 - **Lingua**: Spiegazioni in italiano, terminologia tecnica in inglese
 
-## Come Riprendere
-
-1. Aprire `index.html` e cercare l'ultimo modulo completato
-2. Aggiungere link nella sidebar per il nuovo modulo
-3. Aggiungere contenuto prima di `</main>`
-4. Aggiungere spiegazioni quiz nell'oggetto `explanations` nel JavaScript
-5. Aggiornare questo TODO.md
-
 ## Convenzioni Codice
 
 - ID sezioni: `modulo{N}-{topic}` (es: `modulo3-cap-theorem`)
-- ID quiz: `q{N}` progressivo globale (ultimo usato: q40)
+- ID quiz: `q{N}` progressivo globale (ultimo usato: q60)
 - Diagrammi: ASCII art dentro `<div class="diagram"><pre>...</pre></div>`
 - Info box: `<div class="info-box">`, `.info-box.warning`, `.info-box.success`
