@@ -2,72 +2,72 @@
 
 ## DA COMPLETARE
 
-### Modulo 13: System Design
-- [ ] Framework per affrontare un problema di system design:
-  - [ ] Raccolta requisiti (funzionali e non funzionali)
-  - [ ] Back-of-the-envelope estimation (traffico, storage, bandwidth)
-  - [ ] API design
-  - [ ] Data model e scelta database
-  - [ ] High-level design
-  - [ ] Deep dive sui componenti critici
-- [ ] Esercizi completi:
-  - [ ] URL Shortener (hashing, base62, read-heavy system)
-  - [ ] Chat System (WebSocket, presence, message delivery)
-  - [ ] News Feed / Timeline (fan-out on write vs read, ranking)
-  - [ ] Rate Limiter (token bucket, sliding window, distributed)
-  - [ ] Notification System (push, email, SMS, priority queue)
-- [ ] Pattern ricorrenti:
-  - [ ] Database sharding e partitioning strategies
-  - [ ] Consistent hashing
-  - [ ] Message queue come disaccoppiamento
-  - [ ] CDN e caching multi-livello
-  - [ ] Database replication (master-slave, multi-master)
-- [ ] Quiz interattivo
-- [ ] Domande da colloquio
+### Modulo 13: System Design ✅
+- [x] Framework per affrontare un problema di system design:
+  - [x] Raccolta requisiti (funzionali e non funzionali)
+  - [x] Back-of-the-envelope estimation (traffico, storage, bandwidth)
+  - [x] API design
+  - [x] Data model e scelta database
+  - [x] High-level design
+  - [x] Deep dive sui componenti critici
+- [x] Esercizi completi:
+  - [x] URL Shortener (hashing, base62, read-heavy system)
+  - [x] Chat System (WebSocket, presence, message delivery)
+  - [x] News Feed / Timeline (fan-out on write vs read, ranking)
+  - [x] Rate Limiter (token bucket, sliding window, distributed)
+  - [x] Notification System (push, email, SMS, priority queue)
+- [x] Pattern ricorrenti:
+  - [x] Database sharding e partitioning strategies
+  - [x] Consistent hashing
+  - [x] Message queue come disaccoppiamento
+  - [x] CDN e caching multi-livello
+  - [x] Database replication (master-slave, multi-master)
+- [x] Quiz interattivo
+- [x] Domande da colloquio
 
-### Modulo 14: Concurrency & Multithreading
-- [ ] Fondamenti:
-  - [ ] Thread, Runnable, Callable
-  - [ ] Thread lifecycle e stati
-  - [ ] synchronized, volatile, atomic classes
-  - [ ] Race conditions e deadlock (detection, prevention)
-- [ ] Java Concurrency API:
-  - [ ] ExecutorService e ThreadPool (Fixed, Cached, Scheduled)
-  - [ ] Future e CompletableFuture (chaining, combining, error handling)
-  - [ ] CountDownLatch, CyclicBarrier, Semaphore
-  - [ ] Concurrent Collections (ConcurrentHashMap, BlockingQueue, CopyOnWriteArrayList)
-  - [ ] ReadWriteLock vs StampedLock
-- [ ] Virtual Threads (Java 21):
-  - [ ] Platform threads vs virtual threads
-  - [ ] Structured concurrency
-  - [ ] Quando usare e quando evitare
-- [ ] Pattern:
-  - [ ] Producer-Consumer
-  - [ ] Thread-safe Singleton
-  - [ ] Fork/Join framework
-- [ ] Quiz interattivo
-- [ ] Domande da colloquio
+### Modulo 14: Concurrency & Multithreading ✅
+- [x] Fondamenti:
+  - [x] Thread, Runnable, Callable
+  - [x] Thread lifecycle e stati
+  - [x] synchronized, volatile, atomic classes
+  - [x] Race conditions e deadlock (detection, prevention)
+- [x] Java Concurrency API:
+  - [x] ExecutorService e ThreadPool (Fixed, Cached, Scheduled)
+  - [x] Future e CompletableFuture (chaining, combining, error handling)
+  - [x] CountDownLatch, CyclicBarrier, Semaphore
+  - [x] Concurrent Collections (ConcurrentHashMap, BlockingQueue, CopyOnWriteArrayList)
+  - [x] ReadWriteLock vs StampedLock
+- [x] Virtual Threads (Java 21):
+  - [x] Platform threads vs virtual threads
+  - [x] Structured concurrency
+  - [x] Quando usare e quando evitare
+- [x] Pattern:
+  - [x] Producer-Consumer
+  - [x] Thread-safe Singleton
+  - [x] Fork/Join framework
+- [x] Quiz interattivo
+- [x] Domande da colloquio
 
-### Modulo 15: Design Patterns
-- [ ] Creational:
-  - [ ] Factory Method e Abstract Factory
-  - [ ] Builder (con esempi Java reali: Lombok, Stream API)
-  - [ ] Singleton (thread-safe, enum, problemi con testing)
-  - [ ] Prototype
-- [ ] Structural:
-  - [ ] Adapter
-  - [ ] Decorator (Java I/O streams come esempio)
-  - [ ] Facade
-  - [ ] Proxy (collegamento con Spring AOP)
-- [ ] Behavioral:
-  - [ ] Strategy (con lambdas in Java moderno)
-  - [ ] Observer (collegamento con event-driven architecture)
-  - [ ] Template Method
-  - [ ] Chain of Responsibility (middleware, filter chain)
-  - [ ] Command
-- [ ] Quando usare e quando evitare (anti-pattern di overengineering)
-- [ ] Quiz interattivo
-- [ ] Domande da colloquio
+### Modulo 15: Design Patterns ✅
+- [x] Creational:
+  - [x] Factory Method e Abstract Factory
+  - [x] Builder (con esempi Java reali: Lombok, Stream API)
+  - [x] Singleton (thread-safe, enum, problemi con testing)
+  - [x] Prototype
+- [x] Structural:
+  - [x] Adapter
+  - [x] Decorator (Java I/O streams come esempio)
+  - [x] Facade
+  - [x] Proxy (collegamento con Spring AOP)
+- [x] Behavioral:
+  - [x] Strategy (con lambdas in Java moderno)
+  - [x] Observer (collegamento con event-driven architecture)
+  - [x] Template Method
+  - [x] Chain of Responsibility (middleware, filter chain)
+  - [x] Command
+- [x] Quando usare e quando evitare (anti-pattern di overengineering)
+- [x] Quiz interattivo
+- [x] Domande da colloquio
 
 ### Modulo 16: Java Internals & JVM
 - [ ] JVM Architecture:
@@ -142,6 +142,6 @@
 ## Convenzioni Codice
 
 - ID sezioni: `modulo{N}-{topic}` (es: `modulo3-cap-theorem`)
-- ID quiz: `q{N}` progressivo globale (ultimo usato: q60)
+- ID quiz: `q{N}` progressivo globale (ultimo usato: q70)
 - Diagrammi: ASCII art dentro `<div class="diagram"><pre>...</pre></div>`
 - Info box: `<div class="info-box">`, `.info-box.warning`, `.info-box.success`
