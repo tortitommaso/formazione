@@ -414,6 +414,39 @@
             display: inline-block;
         }
 
+        /* Mobile menu button */
+        .mobile-menu-btn {
+            display: none;
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 1001;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            line-height: 1;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .mobile-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+
+        .mobile-overlay.active {
+            display: block;
+        }
+
         /* Responsive */
         @media (max-width: 1024px) {
             .sidebar {
@@ -437,17 +470,123 @@
         }
 
         @media (max-width: 768px) {
+            .mobile-menu-btn {
+                display: flex;
+            }
+
             .sidebar {
-                display: none;
+                display: flex;
+                flex-direction: column;
+                width: 280px;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                z-index: 1000;
+                padding: 20px 0;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .sidebar-header, .nav-section h3, .nav-link span {
+                display: block;
+            }
+
+            .sidebar .nav-link {
+                text-align: left;
+                padding: 8px 12px;
             }
 
             .main-content {
                 margin-left: 0;
-                padding: 20px;
+                padding: 20px 16px;
+                padding-top: 70px;
             }
 
             .module-header h1 {
-                font-size: 1.8rem;
+                font-size: 1.5rem;
+            }
+
+            .module-header p {
+                font-size: 0.95rem;
+            }
+
+            .section h2 {
+                font-size: 1.25rem;
+            }
+
+            .section h3 {
+                font-size: 1.05rem;
+            }
+
+            pre {
+                padding: 14px !important;
+                font-size: 0.78rem;
+            }
+
+            code {
+                font-size: 0.8rem;
+            }
+
+            .diagram {
+                padding: 15px 10px;
+            }
+
+            .diagram pre {
+                font-size: 0.65rem;
+            }
+
+            .info-box {
+                padding: 15px;
+            }
+
+            table {
+                display: block;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            th, td {
+                padding: 8px 10px;
+                font-size: 0.85rem;
+                white-space: nowrap;
+            }
+
+            .quiz-section {
+                padding: 20px 15px;
+            }
+
+            .quiz-option {
+                padding: 12px;
+            }
+
+            .quiz-question h4 {
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .main-content {
+                padding: 15px 12px;
+                padding-top: 65px;
+            }
+
+            .module-header h1 {
+                font-size: 1.3rem;
+            }
+
+            pre {
+                padding: 10px !important;
+                font-size: 0.72rem;
+            }
+
+            .diagram pre {
+                font-size: 0.58rem;
+            }
+
+            th, td {
+                padding: 6px 8px;
+                font-size: 0.8rem;
             }
         }
 
@@ -473,6 +612,10 @@
 </head>
 <body>
     <div class="container">
+        <!-- Mobile menu button -->
+        <button class="mobile-menu-btn" aria-label="Apri menu" onclick="toggleMobileMenu()">&#9776;</button>
+        <div class="mobile-overlay" onclick="toggleMobileMenu()"></div>
+
         <!-- Sidebar Navigation -->
         <nav class="sidebar">
             <div class="sidebar-header">
@@ -21175,6 +21318,12 @@ private int findLast(int[] nums, int target) {
             questionEl.querySelector('.check-btn').disabled = true;
         }
 
+        // Mobile menu toggle
+        function toggleMobileMenu() {
+            document.querySelector('.sidebar').classList.toggle('open');
+            document.querySelector('.mobile-overlay').classList.toggle('active');
+        }
+
         // Smooth scrolling for sidebar links
         document.querySelectorAll('.nav-link').forEach(link => {
             link.addEventListener('click', function(e) {
@@ -21189,6 +21338,12 @@ private int findLast(int[] nums, int target) {
                     // Update active state
                     document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
                     this.classList.add('active');
+
+                    // Close mobile menu after navigation
+                    if (window.innerWidth <= 768) {
+                        document.querySelector('.sidebar').classList.remove('open');
+                        document.querySelector('.mobile-overlay').classList.remove('active');
+                    }
                 }
             });
         });
